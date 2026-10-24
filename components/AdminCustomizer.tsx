@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useCompany } from '@/lib/company-context';
 import { X, Save, RotateCcw, Download, Check, SlidersHorizontal } from 'lucide-react';
+import { GooSwitch } from '@/components/ui/goo-switch';
 
 export function AdminCustomizer() {
+  const pathname = usePathname();
   const {
     data,
     updateProfile,
@@ -35,7 +38,7 @@ export function AdminCustomizer() {
     engineers: data.profile.stats.engineers,
   });
 
-  if (!isCustomizerOpen) {
+  if (pathname?.startsWith('/admin') || !isCustomizerOpen) {
     return null;
   }
 
@@ -286,19 +289,16 @@ export function AdminCustomizer() {
             </div>
 
             <div className="pt-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.isSampleDataNotice}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isSampleDataNotice: e.target.checked })
-                  }
-                  className="rounded text-[#e8400d] focus:ring-[#e8400d]"
-                />
-                <span className="text-xs text-[#111111]">
-                  نمایش نوار شفافیت «داده‌های آزمایشی استاندارد» در بالای سایت
-                </span>
-              </label>
+              <GooSwitch
+                checked={formData.isSampleDataNotice}
+                onCheckedChange={(val) =>
+                  setFormData({ ...formData, isSampleDataNotice: val })
+                }
+                label="نشان شفافیت داده‌های شرکت"
+                description="نمایش نوار «داده‌های آزمایشی استاندارد» در بالای وب‌سایت"
+                size="sm"
+                badge="Goo Switch"
+              />
             </div>
           </div>
 

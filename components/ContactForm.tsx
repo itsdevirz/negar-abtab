@@ -5,7 +5,7 @@ import { useCompany } from '@/lib/company-context';
 import { Send, CheckCircle2, AlertCircle, Copy, Check } from 'lucide-react';
 
 export function ContactForm() {
-  const { data, contactPrefillTopic, setContactPrefillTopic } = useCompany();
+  const { data, contactPrefillTopic, setContactPrefillTopic, addInquiry } = useCompany();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -80,6 +80,17 @@ export function ContactForm() {
           success: true,
           referenceId: resData.trackingId,
           message: resData.message || 'درخواست شما با موفقیت ثبت شد.',
+        });
+        addInquiry({
+          trackingId: resData.trackingId,
+          fullName: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          company: formData.company,
+          serviceCategory: formData.serviceCategory,
+          subject: formData.subject,
+          message: formData.message,
+          status: 'new',
         });
         setContactPrefillTopic('');
       } else {

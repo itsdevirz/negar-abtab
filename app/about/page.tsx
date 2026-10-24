@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCompany } from '@/lib/company-context';
 import {
   ShieldCheck,
@@ -15,6 +16,7 @@ import {
   Layers,
   ChevronLeft,
 } from 'lucide-react';
+import { FadeIn } from '@/components/ui/fade-in';
 
 export default function AboutPage() {
   const { data } = useCompany();
@@ -23,7 +25,7 @@ export default function AboutPage() {
     <div className="space-y-20 pb-20">
       {/* Hero Header */}
       <section className="bg-[#F6F5F3] py-16 border-b border-[rgba(17,17,17,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <FadeIn className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#e8400d]">
             <Link href="/" className="hover:underline">
               صفحه اصلی
@@ -38,16 +40,39 @@ export default function AboutPage() {
           <p className="text-sm sm:text-base text-[#575655] max-w-3xl leading-relaxed">
             پیشینه، خط‌مشی مهندسی، ارزش‌های بنیادین و چشم‌انداز توسعه در طراحی و استقرار سیستم‌های هوشمند کنترل، اتوماسیون و پایش تأسیساتی.
           </p>
-        </div>
+        </FadeIn>
       </section>
 
       {/* Main Narrative Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <FadeIn className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           <div className="lg:col-span-5 space-y-6">
-            <div className="p-6 rounded-2xl bg-[#F6F5F3] border border-[rgba(17,17,17,0.08)] space-y-4">
-              <span className="text-xs font-bold text-[#e8400d] uppercase">معرفی رسمی</span>
-              <h3 className="text-xl font-bold text-[#111111]">
+            <div className="p-6 rounded-2xl bg-[#F6F5F3] border border-[rgba(17,17,17,0.08)] space-y-5">
+              <div className="flex items-center gap-3.5 pb-4 border-b border-[rgba(17,17,17,0.08)]">
+                <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-white p-1.5 shadow-2xs border border-[rgba(17,17,17,0.08)] shrink-0">
+                  <Image
+                    src="/assets/aistudio/file_00000000c9e481f4872f5bd5f71094a4_1__c7980156.png"
+                    alt={data.profile.companyName}
+                    width={64}
+                    height={64}
+                    priority
+                    className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-[#e8400d] uppercase tracking-wide block">
+                    نشان رسمی و هویت بصری
+                  </span>
+                  <span className="text-base font-bold text-[#111111] block">
+                    {data.profile.companyName}
+                  </span>
+                  <span className="text-[11px] text-[#6D6C6B]">
+                    گزارشگری · شفافیت · پاسخگویی
+                  </span>
+                </div>
+              </div>
+              <h3 className="text-lg font-bold text-[#111111]">
                 تلفیق دانش فرآیند، سخت‌افزار صنعتی و نرم‌افزار زمان‌واقعی
               </h3>
               <p className="text-xs sm:text-sm text-[#575655] leading-relaxed">
@@ -80,7 +105,7 @@ export default function AboutPage() {
               امروزه دپارتمان‌های فنی شرکت با در اختیار داشتن متخصصان برجسته در حوزه‌های برق قدرت، اتوماسیون، شبکه‌های مخابراتی صنعتی و پردازش داده‌ها، خدمات کامل EPC از امکان‌سنجی تا راه‌اندازی و نگهداری را ارائه می‌نمایند.
             </p>
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* Mission & Vision Section */}

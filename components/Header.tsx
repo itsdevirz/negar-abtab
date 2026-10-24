@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useCompany } from '@/lib/company-context';
-import { Menu, X, SlidersHorizontal, ArrowUpLeft } from 'lucide-react';
+import { Menu, X, SlidersHorizontal } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export function Header() {
   const pathname = usePathname();
@@ -20,11 +22,17 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // If in Admin Panel, do NOT render the main website navbar at all
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
   const navLinks = [
     { href: '/', label: 'صفحه اصلی' },
     { href: '/about', label: 'درباره شرکت' },
     { href: '/services', label: 'خدمات و توانمندی‌ها' },
     { href: '/projects', label: 'پروژه‌ها و نمونه‌کارها' },
+    { href: '/tutorials', label: 'آموزش و ویدئوها' },
     { href: '/records', label: 'سوابق و دستاوردها' },
     { href: '/contact', label: 'تماس با ما' },
   ];
@@ -39,15 +47,28 @@ export function Header() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-6">
-          {/* Zone 1: Single text element Brand Zone */}
+          {/* Zone 1: Single text element Brand Zone with Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 text-lg sm:text-xl font-bold tracking-tight text-[#111111] hover:text-[#e8400d] transition-colors whitespace-nowrap shrink-0"
+            className="flex items-center gap-3 text-lg sm:text-xl font-bold tracking-tight text-[#111111] hover:text-[#e8400d] transition-colors whitespace-nowrap shrink-0 group"
           >
-            <span className="w-8 h-8 rounded-lg bg-[#111111] text-white flex items-center justify-center font-bold text-sm">
-              ن‌آ
-            </span>
-            <span>{data.profile.brandTitle}</span>
+            <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-2xs border border-[rgba(17,17,17,0.08)] bg-white shrink-0 flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform">
+              <Image
+                src={data.profile.logoUrl || '/assets/aistudio/file_00000000c9e481f4872f5bd5f71094a4_1__c7980156.png'}
+                alt={data.profile.brandTitle}
+                width={48}
+                height={48}
+                priority
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="leading-tight">{data.profile.brandTitle}</span>
+              <span className="text-[10px] font-normal text-[#6D6C6B] hidden sm:block">
+                گزارشگری | شفافیت | پاسخگویی
+              </span>
+            </div>
           </Link>
 
           {/* Zone 2: Navigation Links (Clean unboxed text with active indicator) */}
@@ -75,23 +96,14 @@ export function Header() {
 
           {/* Zone 3: Primary Action & Quick Tools */}
           <div className="flex items-center gap-2.5 shrink-0">
-            {/* Quick Admin Drawer Toggle */}
-            <button
-              onClick={() => setIsCustomizerOpen(true)}
-              title="تنظیمات و ویرایش آنلاین محتوا"
-              aria-label="تنظیمات و ویرایش آنلاین محتوا"
-              className="p-2 text-[#575655] hover:text-[#111111] hover:bg-[#F6F5F3] rounded-lg transition-colors border border-[rgba(17,17,17,0.06)]"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
-
-            {/* Primary Action Button */}
+            {/* Admin Panel Direct Link */}
             <Link
-              href="/contact"
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#111111] hover:bg-[#272625] active:bg-black rounded-lg transition-colors whitespace-nowrap shrink-0 shadow-xs"
+              href="/admin"
+              title="پنل مدیریت پیشرفته سایت"
+              className="px-2.5 py-1.5 text-[#575655] hover:text-[#111111] hover:bg-[#F6F5F3] rounded-lg transition-colors border border-[rgba(17,17,17,0.08)] flex items-center gap-1.5 text-xs font-semibold"
             >
-              <span>درخواست همکاری</span>
-              <ArrowUpLeft className="w-3.5 h-3.5" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#e8400d]" />
+              <span className="hidden sm:inline">پنل ادمین</span>
             </Link>
 
             {/* Mobile menu button */}
@@ -106,37 +118,41 @@ export function Header() {
         </div>
 
         {/* Mobile dropdown */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden mt-3 pt-3 pb-2 border-t border-[rgba(17,17,17,0.06)] space-y-1">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                    isActive
-                      ? 'bg-[#F6F5F3] text-[#e8400d] font-semibold'
-                      : 'text-[#111111] hover:bg-[#F6F5F3]'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-            <div className="pt-2">
-              <Link
-                href="/contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-white bg-[#111111] hover:bg-[#272625] rounded-lg transition-colors"
-              >
-                <span>درخواست همکاری رسمی</span>
-                <ArrowUpLeft className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] }}
+              className="lg:hidden mt-3 pt-3 pb-2 border-t border-[rgba(17,17,17,0.06)] space-y-1 overflow-hidden"
+            >
+              {navLinks.map((link, idx) => {
+                const isActive = pathname === link.href;
+                return (
+                  <motion.div
+                    key={link.href}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.04 }}
+                  >
+                    <Link
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                        isActive
+                          ? 'bg-[#F6F5F3] text-[#e8400d] font-semibold'
+                          : 'text-[#111111] hover:bg-[#F6F5F3]'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </header>
   );

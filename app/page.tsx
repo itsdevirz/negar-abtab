@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useCompany } from '@/lib/company-context';
 import { ProjectCard } from '@/components/ProjectCard';
+import { Timeline } from '@/components/ui/timeline';
+import { FadeIn, FadeInStagger, FadeInItem } from '@/components/ui/fade-in';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowUpLeft,
   ArrowLeft,
@@ -21,11 +24,17 @@ import {
   Building2,
   Boxes,
   Compass,
+  Rocket,
+  Scale,
+  Headphones,
+  LineChart,
+  Workflow,
 } from 'lucide-react';
 
 export default function HomePage() {
   const { data, setIsCustomizerOpen } = useCompany();
   const [activeProjectFilter, setActiveProjectFilter] = useState<string>('all');
+  const [activePillarIndex, setActivePillarIndex] = useState<number>(0);
 
   // Filter projects for the featured section
   const filteredProjects =
@@ -51,13 +60,80 @@ export default function HomePage() {
     }
   };
 
+  const workflowPillars = [
+    {
+      id: 'scalability',
+      title: 'مقیاس‌پذیری بالا و معماری تاب‌آور',
+      shortTitle: 'مقیاس‌پذیری بالا',
+      icon: Scale,
+      color: '#FFD7F0',
+      badge: '+۱۰,۰۰۰ گره داده',
+      tagline: 'معماری ماژولار با پذیرش آنی صدها ایستگاه تله‌متری بدون افت کارایی',
+      metric1: { label: 'ظرفیت سنسورها', value: 'Edge-to-Cloud نامحدود' },
+      metric2: { label: 'تأخیر پردازش', value: '< ۵ میلی‌ثانیه' },
+      points: [
+        'معماری ماژولار توزیع‌شده با قابلیت افزایش خطوط و گره‌ها بدون توقف سیستم',
+        'سازگاری چندپروتکلی (Modbus, Profinet, OPC-UA, MQTT, DNP3)',
+        'پردازش لبه (Edge Computing) برای تضمین کارکرد پیوسته در قطعی موقت شبکه',
+      ],
+    },
+    {
+      id: 'speed',
+      title: 'توسعه و استقرار سریع',
+      shortTitle: 'توسعه سریع',
+      icon: Rocket,
+      color: '#FFEF99',
+      badge: '۴۰٪ کاهش دوره پروژه',
+      tagline: 'تحویل چابک پروژه‌ها با مهندسی همزمان و آزمون شبیه‌سازی پیشرفته',
+      metric1: { label: 'آزمون شبیه‌سازی', value: '۱۰۰٪ دیجیتال‌توئین' },
+      metric2: { label: 'سرعت راه‌اندازی', value: '۳ برابر سریع‌تر' },
+      points: [
+        'شبیه‌سازی کامل منطق کنترل (Software-in-the-Loop) پیش از اجرا در سایت',
+        'کتابخانه‌های استاندارد و تست‌شده PLC و HMI مطابق استاندارد IEC 61131-3',
+        'کاهش حداکثری زمان توقف خطوط تولید کارفرما در روز راه‌اندازی',
+      ],
+    },
+    {
+      id: 'support',
+      title: 'پشتیبانی کامل و در دسترس',
+      shortTitle: 'پشتیبانی کامل',
+      icon: Headphones,
+      color: '#B7EFB2',
+      badge: '۲۴/۷ SLA تضمینی',
+      tagline: 'دسترسی مستقیم به تیم مهندسی طراح پروژه و عیب‌یابی آنی ریموت و حضوری',
+      metric1: { label: 'زمان واکنش اضطراری', value: '< ۱۵ دقیقه' },
+      metric2: { label: 'پایداری عملیاتی', value: '۹۹.۹۸٪ تضمینی' },
+      points: [
+        'کانال مستقیم ارتباطی با کارشناسان ارشد اتوماسیون در تمام ساعات شبانه‌روز',
+        'عیب‌یابی از راه دور امن (Secure Remote Diagnostics) با پروتکل‌های رمزنگاری‌شده',
+        'تأمین فوری قطعات استاندارد، اعزام تیم به سایت و برگزاری دوره‌های آموزشی اپراتوری',
+      ],
+    },
+    {
+      id: 'monitoring',
+      title: 'تحلیل داده و مانیتورینگ زنده',
+      shortTitle: 'تحلیل و مانیتورینگ',
+      icon: LineChart,
+      color: '#E8F0FE',
+      badge: 'داده‌محور و لحظه‌ای',
+      tagline: 'داشبوردهای هوشمند ارگونومیک، تحلیل روندهای فرآیندی و پیشگیری از خرابی',
+      metric1: { label: 'نرخ بروزرسانی داده', value: 'بلادرنگ (Real-Time)' },
+      metric2: { label: 'کشف ناهنجاری', value: '۹۹.۴٪ پیشگیرانه' },
+      points: [
+        'رابط‌های کاربری صنعتی ارگونومیک منطبق با استاندارد بین‌المللی ISA-101',
+        'الگوریتم‌های کشف ناهنجاری پیشگیرانه برای جلوگیری از آسیب به ماشین‌آلات حساس',
+        'ثبت رویدادها، آرشیو داده‌های تاریخی و گزارش‌گیری خودکار برای مدیران ارشد',
+      ],
+    },
+  ];
+
   return (
     <div className="space-y-24 pb-20">
       {/* =========================================================================
           SECTION 1: HERO
       ========================================================================= */}
       <section className="relative overflow-hidden pt-8 pb-12 sm:pt-14 sm:pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FadeIn className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             {/* Left/Main Col: Typographic Statement */}
             <div className="lg:col-span-7 space-y-6">
@@ -117,90 +193,160 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Col: High-End Architectural Blueprint Graphic */}
+            {/* Right Col: How We Work & Engineering Methodology Card */}
             <div className="lg:col-span-5">
-              <div className="relative rounded-3xl bg-[#F6F5F3] border border-[rgba(17,17,17,0.08)] p-6 sm:p-8 space-y-6 overflow-hidden shadow-xs">
+              <div className="relative rounded-3xl bg-[#F6F5F3] border border-[rgba(17,17,17,0.08)] p-5 sm:p-6 space-y-5 overflow-hidden shadow-xs">
                 {/* Visual Header */}
-                <div className="flex items-center justify-between border-b border-[rgba(17,17,17,0.06)] pb-4">
+                <div className="flex items-center justify-between border-b border-[rgba(17,17,17,0.06)] pb-3.5">
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-[#e8400d]" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs font-bold text-[#111111]">
-                      معماری یکپارچه پایش و اتوماسیون
+                      نحوه کار و رویکرد مهندسی ما
                     </span>
                   </div>
-                  <span className="text-[11px] font-mono text-[#6D6C6B]">ISA-101 / SCADA</span>
+                  <span className="text-[11px] font-mono text-[#6D6C6B] bg-white px-2 py-0.5 rounded-md border border-[rgba(17,17,17,0.06)]">
+                    AGILE · EPC · 24/7
+                  </span>
                 </div>
 
-                {/* Conceptual Interactive Architecture diagram */}
-                <div className="space-y-3">
-                  <div className="p-3.5 bg-white rounded-xl border border-[rgba(17,17,17,0.08)] flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-[#FFD7F0] flex items-center justify-center">
-                        <Cpu className="w-4 h-4 text-[#111111]" />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-[#111111]">سطح کنترل و فرآیند</h4>
-                        <p className="text-[11px] text-[#6D6C6B]">PLC Redundant · RTU · DCS</p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-sm">
-                      فعال و پایدار
-                    </span>
-                  </div>
+                {/* 4 Interactive Switcher Tabs */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-white/80 rounded-xl border border-[rgba(17,17,17,0.06)]">
+                  {workflowPillars.map((pillar, idx) => {
+                    const isActive = activePillarIndex === idx;
+                    const Icon = pillar.icon;
+                    return (
+                      <button
+                        key={pillar.id}
+                        type="button"
+                        onClick={() => setActivePillarIndex(idx)}
+                        className={`flex items-center justify-center gap-1.5 py-2 px-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                          isActive
+                            ? 'bg-[#111111] text-white shadow-xs'
+                            : 'text-[#575655] hover:text-[#111111] hover:bg-black/5'
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[#575655]'}`} />
+                        <span className="truncate">{pillar.shortTitle}</span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-                  <div className="p-3.5 bg-white rounded-xl border border-[rgba(17,17,17,0.08)] flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-[#B7EFB2] flex items-center justify-center">
-                        <Radio className="w-4 h-4 text-[#111111]" />
+                {/* Active Pillar Showcase Card */}
+                {(() => {
+                  const current = workflowPillars[activePillarIndex];
+                  const CurrentIcon = current.icon;
+                  return (
+                    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[rgba(17,17,17,0.08)] space-y-4 shadow-2xs">
+                      {/* Active Pillar Title & Badge */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-black/5 shadow-2xs"
+                            style={{ backgroundColor: current.color }}
+                          >
+                            <CurrentIcon className="w-5 h-5 text-[#111111]" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs sm:text-sm font-bold text-[#111111]">
+                              {current.title}
+                            </h3>
+                            <p className="text-[11px] text-[#6D6C6B] mt-0.5 leading-snug">
+                              {current.tagline}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full shrink-0">
+                          {current.badge}
+                        </span>
                       </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-[#111111]">بستر مخابراتی و تله‌متری</h4>
-                        <p className="text-[11px] text-[#6D6C6B]">LoRaWAN · 4G LTE · UHF Radio</p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-sm">
-                      لینک رمزنگاری‌شده
-                    </span>
-                  </div>
 
-                  <div className="p-3.5 bg-white rounded-xl border border-[rgba(17,17,17,0.08)] flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-[#FFEF99] flex items-center justify-center">
-                        <Activity className="w-4 h-4 text-[#111111]" />
+                      {/* 2 Key Quantitative Metrics */}
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <div className="bg-[#FAF9F7] rounded-xl p-2.5 border border-[rgba(17,17,17,0.05)]">
+                          <span className="block text-[10px] text-[#6D6C6B] font-medium">
+                            {current.metric1.label}
+                          </span>
+                          <span className="block text-xs font-bold font-mono text-[#111111] mt-0.5">
+                            {current.metric1.value}
+                          </span>
+                        </div>
+                        <div className="bg-[#FAF9F7] rounded-xl p-2.5 border border-[rgba(17,17,17,0.05)]">
+                          <span className="block text-[10px] text-[#6D6C6B] font-medium">
+                            {current.metric2.label}
+                          </span>
+                          <span className="block text-xs font-bold font-mono text-[#111111] mt-0.5">
+                            {current.metric2.value}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-[#111111]">مرکز دیسپاچینگ و تحلیل</h4>
-                        <p className="text-[11px] text-[#6D6C6B]">مانیتورینگ متمرکز · هشدار بحران</p>
+
+                      {/* Concrete Process Execution Points */}
+                      <div className="space-y-2 pt-1 border-t border-[rgba(17,17,17,0.05)]">
+                        {current.points.map((point, pIdx) => (
+                          <div key={pIdx} className="flex items-start gap-2 text-[11px] text-[#333333] leading-relaxed">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                            <span>{point}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-sm">
-                      پایش برخط ۲۴/۷
-                    </span>
+                  );
+                })()}
+
+                {/* Quick Pillar Status Micro-Strip */}
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-semibold text-[#6D6C6B] flex items-center justify-between px-1">
+                    <span>ستون‌های عملیاتی چرخه پروژه:</span>
+                    <span className="text-[10px] text-[#8C8B8A]">کلیک برای مشاهده جزئیات</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {workflowPillars.map((p, idx) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setActivePillarIndex(idx)}
+                        className={`text-right p-2 rounded-xl border text-[10px] transition-all flex items-center justify-between ${
+                          activePillarIndex === idx
+                            ? 'bg-white border-[#111111] text-[#111111] font-bold shadow-2xs'
+                            : 'bg-white/60 border-[rgba(17,17,17,0.06)] text-[#6D6C6B] hover:bg-white hover:text-[#111111]'
+                        }`}
+                      >
+                        <span className="truncate">{p.shortTitle}</span>
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0 mr-1.5"
+                          style={{ backgroundColor: p.color }}
+                        />
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Bottom live indicator */}
-                <div className="pt-2 flex items-center justify-between text-[11px] text-[#575655]">
-                  <span>طراحی بر مبنای تاب‌آوری بالا</span>
+                {/* Bottom Trust & Action Strip */}
+                <div className="pt-2 border-t border-[rgba(17,17,17,0.06)] flex items-center justify-between text-[11px] text-[#575655]">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    تضمین پایداری ۹۹.۹۸٪ خطوط صنعتی
+                  </span>
                   <button
                     onClick={() => setIsCustomizerOpen(true)}
-                    className="text-[#e8400d] hover:underline flex items-center gap-1 font-medium"
+                    className="text-[#e8400d] hover:underline flex items-center gap-1 font-medium transition-colors"
                   >
                     <SlidersHorizontal className="w-3 h-3" />
-                    <span>سفارشی‌سازی مقادیر</span>
+                    <span>شخصی‌سازی مقادیر</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 2: SHORT INTRO
       ========================================================================= */}
       <section className="bg-[#F6F5F3] py-16 border-y border-[rgba(17,17,17,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FadeIn className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-4 space-y-3">
               <span className="text-xs font-bold text-[#e8400d] tracking-wider uppercase">
@@ -226,14 +372,14 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 3: STATS & INDICATORS
       ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="p-8 sm:p-10 rounded-3xl bg-white border border-[rgba(17,17,17,0.08)] shadow-xs">
+        <FadeIn className="p-8 sm:p-10 rounded-3xl bg-white border border-[rgba(17,17,17,0.08)] shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[rgba(17,17,17,0.06)] gap-4">
             <div>
               <h3 className="text-base sm:text-lg font-bold text-[#111111]">
@@ -244,15 +390,10 @@ export default function HomePage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-[#6D6C6B]">
-                {data.profile.isSampleDataNotice ? 'داده‌های اولیه قابل ویرایش' : 'تاییدشده رسمی'}
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200/60 shadow-2xs">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                آمار و ظرفیت‌های تاییدشده رسمی
               </span>
-              <button
-                onClick={() => setIsCustomizerOpen(true)}
-                className="text-xs text-[#e8400d] hover:underline font-medium"
-              >
-                تغییر ارقام
-              </button>
             </div>
           </div>
 
@@ -288,14 +429,15 @@ export default function HomePage() {
               <span className="text-xs text-[#575655] block font-medium">کارشناس و مهندس ارشد</span>
             </div>
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 4: SERVICES & SPECIALIZATIONS
       ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <FadeIn className="space-y-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2">
             <span className="text-xs font-bold text-[#e8400d] tracking-wider uppercase">
               حوزه‌های خدمات مهندسی
@@ -362,13 +504,15 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 5: FEATURED PROJECTS WITH CATEGORY FILTER
       ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <FadeIn className="space-y-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2">
             <span className="text-xs font-bold text-[#e8400d] tracking-wider uppercase">
               پروژه‌ها و نمونه‌کارها
@@ -439,13 +583,14 @@ export default function HomePage() {
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </div>
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 6: WHY NEGAR ABTAB ABANGAH?
       ========================================================================= */}
       <section className="bg-[#F6F5F3] py-16 border-y border-[rgba(17,17,17,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        <FadeIn className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="max-w-2xl space-y-2">
             <span className="text-xs font-bold text-[#e8400d] tracking-wider uppercase">
               ارزش‌های تمایزآفرین
@@ -472,14 +617,15 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 7: GROWTH TIMELINE
       ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <FadeIn className="space-y-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2">
             <span className="text-xs font-bold text-[#e8400d] tracking-wider uppercase">
               مسیر پیشرفت
@@ -497,37 +643,15 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="relative border-r-2 border-[rgba(17,17,17,0.1)] pr-6 sm:pr-8 space-y-8 mr-2 sm:mr-4">
-          {data.milestones.map((milestone, idx) => (
-            <div key={idx} className="relative group">
-              {/* Dot on line */}
-              <div className="absolute -right-[31px] sm:-right-[39px] top-1.5 w-4 h-4 rounded-full bg-white border-2 border-[#111111] group-hover:border-[#e8400d] group-hover:scale-125 transition-all" />
-
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="font-bold font-mono text-[#e8400d] text-sm">
-                    {milestone.year}
-                  </span>
-                  <span aria-hidden="true" className="text-[#6D6C6B]">
-                    ·
-                  </span>
-                  <span className="text-[#6D6C6B]">{milestone.highlight}</span>
-                </div>
-                <h3 className="text-base font-bold text-[#111111]">{milestone.title}</h3>
-                <p className="text-xs sm:text-sm text-[#575655] leading-relaxed max-w-3xl">
-                  {milestone.description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <Timeline items={data.milestones} />
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 8: CLIENTS & PARTNER SECTORS
       ========================================================================= */}
       <section className="bg-[#F6F5F3] py-14 border-y border-[rgba(17,17,17,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-center">
+        <FadeIn className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-center">
           <div className="space-y-1 max-w-xl mx-auto">
             <h3 className="text-base sm:text-lg font-bold text-[#111111]">
               بخش‌ها و صنایع هدف خدمات شرکت
@@ -555,14 +679,14 @@ export default function HomePage() {
               <span>پیمانکاران عمومی طرح‌های EPC</span>
             </div>
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 9: TESTIMONIALS & TRANSPARENCY
       ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="p-8 sm:p-10 rounded-3xl bg-white border border-[rgba(17,17,17,0.08)] flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <FadeIn className="p-8 sm:p-10 rounded-3xl bg-white border border-[rgba(17,17,17,0.08)] flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <span className="text-xs font-bold text-[#e8400d] uppercase">اصول اخلاق حرفه‌ای</span>
             <h3 className="text-xl sm:text-2xl font-bold text-[#111111]">
@@ -579,14 +703,14 @@ export default function HomePage() {
             <span>استعلام سوابق و رضایت‌نامه‌ها</span>
             <ArrowUpLeft className="w-4 h-4" />
           </Link>
-        </div>
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 10: COLLABORATION CTA
       ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl bg-[#272625] text-white p-8 sm:p-14 overflow-hidden border border-[#3a3937] space-y-6 text-center sm:text-right">
+        <FadeIn className="relative rounded-3xl bg-[#272625] text-white p-8 sm:p-14 overflow-hidden border border-[#3a3937] space-y-6 text-center sm:text-right">
           {/* Subtle background glow */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#e8400d]/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -620,14 +744,73 @@ export default function HomePage() {
               <span className="text-xs">تماس مستقیم</span>
             </a>
           </div>
-        </div>
+        </FadeIn>
+      </section>
+
+      {/* =========================================================================
+          SECTION: TECHNICAL VIDEO WORKSHOPS & TUTORIALS
+      ========================================================================= */}
+      <section className="bg-[#F6F5F3] py-16 border-y border-[rgba(17,17,17,0.06)]">
+        <FadeIn className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-[#e8400d] tracking-wider uppercase">
+                کارگاه‌های ویدئویی و آموزش‌های تخصصی
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#111111]">
+                ویدئوهای کاربردی مهندسی و آموزش‌های تخصصی
+              </h2>
+            </div>
+            <Link
+              href="/tutorials"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#111111] hover:text-[#e8400d] transition-colors"
+            >
+              <span>مشاهده همه آموزش‌های ویدئویی</span>
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {data.videos.slice(0, 2).map((vid) => (
+              <div
+                key={vid.id}
+                className="bg-white rounded-2xl border border-[rgba(17,17,17,0.08)] p-6 space-y-4 hover:border-[rgba(17,17,17,0.2)] transition-all hover:shadow-xs flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs text-[#6D6C6B]">
+                    <span className="font-semibold text-[#e8400d]">{vid.categoryLabel}</span>
+                    <span className="font-mono">مدت: {vid.duration}</span>
+                  </div>
+                  <h3 className="text-base font-bold text-[#111111] leading-snug">
+                    {vid.title}
+                  </h3>
+                  <p className="text-xs text-[#575655] leading-relaxed line-clamp-3">
+                    {vid.description}
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-[rgba(17,17,17,0.06)] flex items-center justify-between text-xs font-semibold text-[#111111]">
+                  <span>مدرس: {vid.instructor}</span>
+                  <Link
+                    href="/tutorials"
+                    className="inline-flex items-center gap-1 text-[#e8400d] hover:underline"
+                  >
+                    <span>مشاهده و پخش ویدئو</span>
+                    <ArrowUpLeft className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
       </section>
 
       {/* =========================================================================
           SECTION 11: LATEST NEWS & TECHNICAL REPORTS
       ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="space-y-2">
+        <FadeIn className="space-y-8">
+          <div className="space-y-2">
           <span className="text-xs font-bold text-[#e8400d] tracking-wider uppercase">
             دانش و تجارب فنی
           </span>
@@ -668,6 +851,7 @@ export default function HomePage() {
             </article>
           ))}
         </div>
+        </FadeIn>
       </section>
     </div>
   );

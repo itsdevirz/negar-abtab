@@ -13,6 +13,8 @@ import {
   Layers,
   ArrowLeft,
 } from 'lucide-react';
+import { FadeIn } from '@/components/ui/fade-in';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function ServicesPage() {
   const router = useRouter();
@@ -28,7 +30,7 @@ export default function ServicesPage() {
     <div className="space-y-20 pb-20">
       {/* Services Header */}
       <section className="bg-[#F6F5F3] py-16 border-b border-[rgba(17,17,17,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <FadeIn className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#e8400d]">
             <Link href="/" className="hover:underline">
               صفحه اصلی
@@ -43,13 +45,13 @@ export default function ServicesPage() {
           <p className="text-sm sm:text-base text-[#575655] max-w-3xl leading-relaxed">
             راهکارهای یکپارچه در اتوماسیون صنعتی، اسکادا، مانیتورینگ تأسیسات زیرساختی، تجهیزات ابزار دقیق و مشاوره معماری سیستم‌ها.
           </p>
-        </div>
+        </FadeIn>
       </section>
 
       {/* Services Comprehensive Deep-Dive */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         {data.services.map((service, index) => (
-          <div
+          <FadeIn
             key={service.id}
             id={service.id}
             className="rounded-3xl bg-white border border-[rgba(17,17,17,0.08)] p-6 sm:p-10 space-y-8 scroll-mt-28 shadow-xs"
@@ -170,24 +172,33 @@ export default function ServicesPage() {
                             }`}
                           />
                         </button>
-                        {isOpen && (
-                          <div className="p-4 pt-1 bg-[#F6F5F3]/50 text-xs sm:text-sm text-[#575655] leading-relaxed border-t border-[rgba(17,17,17,0.04)]">
-                            {faq.answer}
-                          </div>
-                        )}
+                        <AnimatePresence>
+                          {isOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="p-4 pt-1 bg-[#F6F5F3]/50 text-xs sm:text-sm text-[#575655] leading-relaxed border-t border-[rgba(17,17,17,0.04)]">
+                                {faq.answer}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     );
                   })}
                 </div>
               </div>
             )}
-          </div>
+          </FadeIn>
         ))}
       </section>
 
       {/* Global Inquire Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="p-8 sm:p-12 rounded-3xl bg-[#272625] text-white flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <FadeIn className="p-8 sm:p-12 rounded-3xl bg-[#272625] text-white flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <h3 className="text-2xl font-bold">نیاز به راهکاری فراتر از خدمات استاندارد دارید؟</h3>
             <p className="text-xs sm:text-sm text-[#c5c4c1] leading-relaxed">
@@ -201,7 +212,7 @@ export default function ServicesPage() {
             <span>شروع مشاوره فنی</span>
             <ArrowUpLeft className="w-4 h-4" />
           </Link>
-        </div>
+        </FadeIn>
       </section>
     </div>
   );

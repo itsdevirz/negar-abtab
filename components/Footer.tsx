@@ -2,25 +2,44 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCompany } from '@/lib/company-context';
+import { usePathname } from 'next/navigation';
 import { Phone, Mail, MapPin, Clock, ArrowUpLeft, ShieldCheck, HeartHandshake } from 'lucide-react';
 
 export function Footer() {
+  const pathname = usePathname();
   const { data, setIsCustomizerOpen } = useCompany();
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <footer className="bg-[#272625] text-white pt-16 pb-12 border-t border-[#3a3937]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-[#3a3937]">
-          {/* Col 1 & 2: Brand & Mission */}
+          {/* Col 1 & 2: Brand & Mission with Logo */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <span className="w-9 h-9 rounded-lg bg-[#e8400d] text-white flex items-center justify-center font-bold text-base">
-                ن‌آ
-              </span>
-              <span className="text-xl font-bold tracking-tight text-white">
-                {data.profile.companyName}
-              </span>
+              <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white p-1 flex items-center justify-center shrink-0 border border-white/20 shadow-sm">
+                <Image
+                  src={data.profile.logoUrl || '/assets/aistudio/file_00000000c9e481f4872f5bd5f71094a4_1__c7980156.png'}
+                  alt={data.profile.companyName}
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div>
+                <span className="text-xl font-bold tracking-tight text-white block">
+                  {data.profile.companyName}
+                </span>
+                <span className="text-[11px] text-[#c5c4c1] font-normal">
+                  گزارشگری | شفافیت | پاسخگویی
+                </span>
+              </div>
             </div>
             <p className="text-sm text-[#c5c4c1] leading-relaxed max-w-md">
               مرکز تخصصی فناوری، هوشمندسازی و سیستم‌های جامع مهندسی. متعهد به ارتقای کارایی زیرساخت‌های تأسیساتی و صنعتی با به‌کارگیری استانداردهای بین‌المللی کنترل و اتوماسیون.
@@ -65,6 +84,11 @@ export function Footer() {
               <li>
                 <Link href="/records" className="hover:text-white transition-colors">
                   سوابق، افتخارات و خط زمانی
+                </Link>
+              </li>
+              <li>
+                <Link href="/tutorials" className="hover:text-white transition-colors">
+                  آموزش و ویدئوهای مهندسی
                 </Link>
               </li>
               <li>
@@ -123,12 +147,12 @@ export function Footer() {
             © کلیه حقوق مادی و معنوی متعلق به شرکت «{data.profile.companyName}» است.
           </p>
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsCustomizerOpen(true)}
-              className="text-[#c5c4c1] hover:text-white underline underline-offset-4 transition-colors"
+            <Link
+              href="/admin"
+              className="text-[#c5c4c1] hover:text-[#e8400d] font-semibold underline underline-offset-4 transition-colors"
             >
-              مدیریت و ویرایش اطلاعات سایت
-            </button>
+              پنل مدیریت پیشرفته سایت
+            </Link>
             <span aria-hidden="true">·</span>
             <Link href="/contact" className="hover:text-white transition-colors">
               حریم خصوصی و شرایط همکاری

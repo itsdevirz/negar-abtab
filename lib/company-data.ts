@@ -34,6 +34,36 @@ export interface MilestoneItem {
   highlight: string;
 }
 
+export interface VideoTutorial {
+  id: string;
+  title: string;
+  category: 'automation' | 'scada' | 'telemetry' | 'iot' | 'instrumentation';
+  categoryLabel: string;
+  duration: string;
+  instructor: string;
+  videoUrl: string; // Video URL or embed source
+  description: string;
+  captionText: string; // Full transcript / caption
+  createdAt: string;
+  viewsCount: number;
+  featured: boolean;
+  accentColor: string;
+}
+
+export interface ContactInquiry {
+  id: string;
+  trackingId: string;
+  fullName: string;
+  phone: string;
+  email?: string;
+  company?: string;
+  serviceCategory: string;
+  subject: string;
+  message: string;
+  status: 'new' | 'reviewed' | 'in_progress' | 'closed';
+  createdAt: string;
+}
+
 export interface CompanyProfile {
   companyName: string;
   brandTitle: string;
@@ -50,6 +80,7 @@ export interface CompanyProfile {
   email: string;
   address: string;
   workingHours: string;
+  logoUrl?: string;
   isSampleDataNotice: boolean;
   stats: {
     years: number;
@@ -64,6 +95,8 @@ export const INITIAL_COMPANY_DATA: {
   profile: CompanyProfile;
   services: ServiceItem[];
   projects: ProjectItem[];
+  videos: VideoTutorial[];
+  inquiries: ContactInquiry[];
   milestones: MilestoneItem[];
   differentiators: { title: string; desc: string; iconKey: string }[];
   newsArticles: { id: string; title: string; summary: string; date: string; category: string; readTime: string }[];
@@ -71,6 +104,7 @@ export const INITIAL_COMPANY_DATA: {
   profile: {
     companyName: 'نگار آبتاب آبانگاه',
     brandTitle: 'نگار آبتاب آبانگاه',
+    logoUrl: '/assets/aistudio/file_00000000c9e481f4872f5bd5f71094a4_1__c7980156.png',
     slogan: 'تجربه، تخصص و اعتماد در مهندسی هوشمند',
     heroHeadline: 'نگار آبتاب آبانگاه',
     heroSubheadline: 'نگاهی حرفه‌ای به تجربه، تخصص و آینده',
@@ -102,6 +136,105 @@ export const INITIAL_COMPANY_DATA: {
       engineers: 28,
     },
   },
+
+  videos: [
+    {
+      id: 'vid-modbus-config',
+      title: 'آموزش پیکربندی پروتکل Modbus RTU در کنترلرهای PLC و ترانسمیترهای فشار',
+      category: 'automation',
+      categoryLabel: 'اتوماسیون صنعتی',
+      duration: '۱۲:۴۵',
+      instructor: 'مهندس محمدرضا شایان‌مهر (سرپرست دپارتمان اتوماسیون)',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      description:
+        'در این کارگاه آموزشی به نحوه برقراری ارتباط پایدار دوطرفه میان PLC صنعتی و فلومترهای دیجیتال، تنظیم نرخ تبادل Baud Rate، کدهای تابع Function Codes 03 و 04 و عارضه‌یابی نویز در بستر زوج‌سیم تابیده RS485 می‌پردازیم.',
+      captionText:
+        'در ابتدای این مبحث، مفهوم شبکه‌های صنعتی سریال بر پایه استاندارد TIA/EIA-485 را مرور می‌کنیم. سیم‌بندی اصولی شامل استفاده از کابل شیلددار و مقاومت پایان خط ۱۲۰ اهم است. سپس در نرم‌افزار مهندسی، آدرس‌های رجیستری Holding Register را تعریف نموده و با نرم‌افزار شبیه‌ساز Modscan بسته‌های داده را تجزیه و تحلیل می‌کنیم.',
+      createdAt: '۱۵ مهر ۱۴۰۴',
+      viewsCount: 384,
+      featured: true,
+      accentColor: '#FFD7F0',
+    },
+    {
+      id: 'vid-scada-isa101',
+      title: 'اصول طراحی ارگونومیک صفحات گرافیکی اسکادا (HMI) طبق استانداردهای ISA-101',
+      category: 'scada',
+      categoryLabel: 'سیستم‌های اسکادا',
+      duration: '۱۸:۲۰',
+      instructor: 'دکتر علیرضا کاظمی (مشاور ارشد سیستم‌های کنترل)',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      description:
+        'آشنایی با متدولوژی High-Performance HMI: چرا استفاده از رنگ‌های تند و جلوه‌های سه‌بعدی متحرک در اتاق‌های کنترل منسوخ شده و چگونه صفحات طوسی مات با هایلایت‌های هشداری، زمان تشخیص خطا توسط اپراتور را تا ۵ برابر سرعت می‌بخشند.',
+      captionText:
+        'استاندارد ISA-101 بر کاهش بار شناختی (Cognitive Load) اپراتور تأکید دارد. در شرایط عادی بهره‌برداری، صفحه مانیتور باید در طیف‌های خنثی و خاکستری بماند. فقط در زمان بروز آلارم بحرانی یا خروج پارامتر از محدوده مجاز، رنگ‌های فسفری و زرد به‌صورت هدفمند فعال می‌گردند.',
+      createdAt: '۲۸ شهریور ۱۴۰۴',
+      viewsCount: 612,
+      featured: true,
+      accentColor: '#B7EFB2',
+    },
+    {
+      id: 'vid-lorawan-field',
+      title: 'راه‌اندازی گیت‌وی LoRaWAN و پایش داده‌های حسگرهای رطوبت و سطح مخازن',
+      category: 'iot',
+      categoryLabel: 'اینترنت اشیاء صنعتی',
+      duration: '۱۵:۱۰',
+      instructor: 'مهندس نیما بهرامی (کارشناس ارشد تله‌متری)',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      description:
+        'آموزش گام‌به‌گام اتصال گره‌های سنسور بی‌سیم کم‌مصرف در باند فرکانسی مجاز کشور، استقرار گیت‌وی بیرونی با استاندارد IP67 و انتقال پکت‌ها به سرور محلی The Things Network (ChirpStack).',
+      captionText:
+        'یکی از مهم‌ترین عوامل در موفقیت پروژه‌های تله‌متری مزارع و خطوط انتقال، تحلیل Link Budget و ضریب گسترش Spreading Factor است. در این ویدیو نحوه اندازه‌گیری توان دریافتی RSSI و نسبت سیگنال به نویز SNR را در شرایط واقعی بررسی می‌کنیم.',
+      createdAt: '۱۰ شهریور ۱۴۰۴',
+      viewsCount: 420,
+      featured: false,
+      accentColor: '#FFEF99',
+    },
+    {
+      id: 'vid-fat-testing',
+      title: 'چک‌لیست آزمون پذیرش کارگاهی (FAT) تابلوهای کنترل و سیستم‌های افزونه Redundant',
+      category: 'instrumentation',
+      categoryLabel: 'ابزار دقیق و تابلو',
+      duration: '۲۱:۴۰',
+      instructor: 'مهندس پوریا کریمی (سرپرست تست و کنترل کیفی)',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      description:
+        'روش‌های استاندارد آزمایش تابلوهای کنترل PLC پیش از تحویل به سایت پروژه، شبیه‌سازی قطعی پردازنده اصلی و سوئیچ به پردازنده Standby در کمتر از ۵۰ میلی‌ثانیه بدون افت سیگنال.',
+      captionText:
+        'پروتکل FAT شامل ۴ مرحله اصلی است: آزمون عایقی و ولتاژ بالا (Dielectric Test)، تست فانکشنال تک‌تک کانال‌های ورودی/خروجی I/O، شبیه‌سازی شرایط قطعی منبع تغذیه UPS و آزمون اینترلاک‌های ایمنی اضطراری ESD.',
+      createdAt: '۲۲ مرداد ۱۴۰۴',
+      viewsCount: 295,
+      featured: false,
+      accentColor: '#E2DDFD',
+    },
+  ],
+
+  inquiries: [
+    {
+      id: 'inq-1',
+      trackingId: 'NAT-1404-8921',
+      fullName: 'مهندس حسینی',
+      phone: '۰۹۱۲۲۱۱۴۴۵۵',
+      email: 'hoseini@water-co.ir',
+      company: 'شرکت آب و فاضلاب منطقه',
+      serviceCategory: 'اتوماسیون صنعتی و سیستم‌های اسکادا',
+      subject: 'استعلام تله‌متری و اسکادای ۱۰ ایستگاه پمپاژ',
+      message: 'با سلام، نیازمند ارزیابی فنی و برآورد هزینه استقرار سیستم پایش متمرکز برای ۱۰ ایستگاه پمپاژ چاه‌ها هستیم. لطفاً جهت جلسه هماهنگی بفرمایید.',
+      status: 'in_progress',
+      createdAt: '۱۴۰۴/۰۷/۲۸',
+    },
+    {
+      id: 'inq-2',
+      trackingId: 'NAT-1404-3310',
+      fullName: 'مهندس احمدی',
+      phone: '۰۹۳۵۶۶۷۸۸۹۹',
+      company: 'صنایع فولاد پاسارگاد',
+      serviceCategory: 'مانیتورینگ هوشمند تأسیسات و انرژی',
+      subject: 'ممیزی مصرف برق فیدرهای اصلی کارخانه',
+      message: 'سلام. تمایل داریم برای ۶۴ فیدر تابلویی سیستم پاورمترینگ آنلاین نصب کنیم تا جریمه دیماند کاهش یابد. کاتالوگ سخت‌افزارها را ارسال فرمایید.',
+      status: 'new',
+      createdAt: '۱۴۰۴/۰۷/۲۹',
+    },
+  ],
 
   services: [
     {

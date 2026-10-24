@@ -14,6 +14,7 @@ import {
   Building,
   SlidersHorizontal,
 } from 'lucide-react';
+import { FadeIn } from '@/components/ui/fade-in';
 
 export default function ContactPage() {
   const { data, setIsCustomizerOpen } = useCompany();
@@ -22,7 +23,7 @@ export default function ContactPage() {
     <div className="space-y-16 pb-20">
       {/* Header */}
       <section className="bg-[#F6F5F3] py-16 border-b border-[rgba(17,17,17,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <FadeIn className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#e8400d]">
             <Link href="/" className="hover:underline">
               صفحه اصلی
@@ -37,12 +38,12 @@ export default function ContactPage() {
           <p className="text-sm sm:text-base text-[#575655] max-w-3xl leading-relaxed">
             جهت استعلام خدمات مهندسی، مشاوره فنی، برگزاری جلسات حضوری یا ارسال درخواست همکاری، از راه‌های ارتباطی زیر استفاده فرمایید.
           </p>
-        </div>
+        </FadeIn>
       </section>
 
       {/* Main Grid: Info + Contact Form */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        <FadeIn className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* Left Column: Official Details Cards */}
           <div className="lg:col-span-5 space-y-6">
             <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[rgba(17,17,17,0.08)] space-y-6 shadow-2xs">
@@ -167,7 +168,7 @@ export default function ContactPage() {
 
             <ContactForm />
           </div>
-        </div>
+        </FadeIn>
       </section>
     </div>
   );

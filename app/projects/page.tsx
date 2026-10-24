@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCompany } from '@/lib/company-context';
 import { ProjectCard } from '@/components/ProjectCard';
 import { Search, Filter, RotateCcw } from 'lucide-react';
+import { FadeIn } from '@/components/ui/fade-in';
 
 export default function ProjectsPage() {
   const { data } = useCompany();
@@ -46,7 +47,7 @@ export default function ProjectsPage() {
     <div className="space-y-16 pb-20">
       {/* Header */}
       <section className="bg-[#F6F5F3] py-16 border-b border-[rgba(17,17,17,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <FadeIn className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#e8400d]">
             <Link href="/" className="hover:underline">
               صفحه اصلی
@@ -61,12 +62,12 @@ export default function ProjectsPage() {
           <p className="text-sm sm:text-base text-[#575655] max-w-3xl leading-relaxed">
             مجموعه سوابق، پیاده‌سازی سامانه‌های اتوماسیون، تله‌متری و مانیتورینگ تأسیسات با مشخصات فنی و نتایج سنجش‌پذیر.
           </p>
-        </div>
+        </FadeIn>
       </section>
 
       {/* Filter and Search Bar */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="p-4 sm:p-6 bg-white rounded-2xl border border-[rgba(17,17,17,0.08)] shadow-2xs space-y-4">
+        <FadeIn className="p-4 sm:p-6 bg-white rounded-2xl border border-[rgba(17,17,17,0.08)] shadow-2xs space-y-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Search Input */}
             <div className="relative w-full md:w-80">
@@ -129,33 +130,35 @@ export default function ProjectsPage() {
               </button>
             )}
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* Projects Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {filteredProjects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        ) : (
-          <div className="py-16 text-center space-y-4 bg-[#F6F5F3] rounded-3xl border border-[rgba(17,17,17,0.06)]">
-            <p className="text-sm font-semibold text-[#111111]">
-              پروژه‌ای مطابق با معیارهای جستجوی شما یافت نشد.
-            </p>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('all');
-              }}
-              className="px-4 py-2 text-xs font-semibold text-white bg-[#111111] rounded-lg hover:bg-[#272625] transition-colors"
-            >
-              نمایش کلیه پروژه‌ها
-            </button>
-          </div>
-        )}
+        <FadeIn>
+          {filteredProjects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          ) : (
+            <div className="py-16 text-center space-y-4 bg-[#F6F5F3] rounded-3xl border border-[rgba(17,17,17,0.06)]">
+              <p className="text-sm font-semibold text-[#111111]">
+                پروژه‌ای مطابق با معیارهای جستجوی شما یافت نشد.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                }}
+                className="px-4 py-2 text-xs font-semibold text-white bg-[#111111] rounded-lg hover:bg-[#272625] transition-colors"
+              >
+                نمایش کلیه پروژه‌ها
+              </button>
+            </div>
+          )}
+        </FadeIn>
       </section>
     </div>
   );

@@ -1,10 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   INITIAL_COMPANY_DATA,
   CompanyProfile,
+  ProjectItem,
+  VideoTutorial,
+  ContactInquiry,
 } from './company-data';
+import { formatPersianDate } from './utils';
 
 interface CompanyContextType {
   data: typeof INITIAL_COMPANY_DATA;
@@ -12,6 +16,20 @@ interface CompanyContextType {
   toggleSampleNotice: () => void;
   resetToDefaults: () => void;
   exportDataAsJson: () => void;
+  importDataFromJson: (jsonString: string) => boolean;
+  // Video Management
+  addVideo: (video: Omit<VideoTutorial, 'id' | 'createdAt' | 'viewsCount'> & { id?: string }) => string;
+  updateVideo: (id: string, updated: Partial<VideoTutorial>) => void;
+  deleteVideo: (id: string) => void;
+  // Project Management
+  addProject: (project: Omit<ProjectItem, 'id'>) => void;
+  updateProject: (id: string, updated: Partial<ProjectItem>) => void;
+  deleteProject: (id: string) => void;
+  // Inquiries / Leads Management
+  addInquiry: (inquiry: Omit<ContactInquiry, 'id' | 'createdAt'>) => void;
+  updateInquiryStatus: (id: string, status: ContactInquiry['status']) => void;
+  deleteInquiry: (id: string) => void;
+  // Modals & Selectors
   isCustomizerOpen: boolean;
   setIsCustomizerOpen: (open: boolean) => void;
   selectedProjectId: string | null;
@@ -22,26 +40,35 @@ interface CompanyContextType {
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'negar_abtab_company_data_v1';
+const STORAGE_KEY = 'negar_abtab_company_data_v2';
 
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<typeof INITIAL_COMPANY_DATA>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          return JSON.parse(stored);
-        }
-      } catch {
-        // Fallback silently
-      }
-    }
-    return INITIAL_COMPANY_DATA;
-  });
-
+  const [data, setData] = useState<typeof INITIAL_COMPANY_DATA>(INITIAL_COMPANY_DATA);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [contactPrefillTopic, setContactPrefillTopic] = useState('');
+
+  // Hydrate from localStorage asynchronously after initial render
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Ensure videos and inquiries arrays exist if restoring from v1
+        const merged: typeof INITIAL_COMPANY_DATA = {
+          ...INITIAL_COMPANY_DATA,
+          ...parsed,
+          videos: parsed.videos || INITIAL_COMPANY_DATA.videos,
+          inquiries: parsed.inquiries || INITIAL_COMPANY_DATA.inquiries,
+        };
+        queueMicrotask(() => {
+          setData(merged);
+        });
+      }
+    } catch {
+      // Fallback silently
+    }
+  }, []);
 
   const saveToStorage = (newData: typeof INITIAL_COMPANY_DATA) => {
     setData(newData);
@@ -67,6 +94,100 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     updateProfile({ isSampleDataNotice: !data.profile.isSampleDataNotice });
   };
 
+  // Video CRUD
+  const addVideo = (
+    videoInput: Omit<VideoTutorial, 'id' | 'createdAt' | 'viewsCount'> & { id?: string }
+  ): string => {
+    const videoId = videoInput.id || `vid-${Date.now()}`;
+    const newVideo: VideoTutorial = {
+      ...videoInput,
+      id: videoId,
+      createdAt: formatPersianDate(new Date()),
+      viewsCount: 1,
+    };
+    const newData = {
+      ...data,
+      videos: [newVideo, ...data.videos],
+    };
+    saveToStorage(newData);
+    return videoId;
+  };
+
+  const updateVideo = (id: string, updated: Partial<VideoTutorial>) => {
+    const newData = {
+      ...data,
+      videos: data.videos.map((v) => (v.id === id ? { ...v, ...updated } : v)),
+    };
+    saveToStorage(newData);
+  };
+
+  const deleteVideo = (id: string) => {
+    const newData = {
+      ...data,
+      videos: data.videos.filter((v) => v.id !== id),
+    };
+    saveToStorage(newData);
+  };
+
+  // Project CRUD
+  const addProject = (projectInput: Omit<ProjectItem, 'id'>) => {
+    const newProject: ProjectItem = {
+      ...projectInput,
+      id: `proj-${Date.now()}`,
+    };
+    const newData = {
+      ...data,
+      projects: [newProject, ...data.projects],
+    };
+    saveToStorage(newData);
+  };
+
+  const updateProject = (id: string, updated: Partial<ProjectItem>) => {
+    const newData = {
+      ...data,
+      projects: data.projects.map((p) => (p.id === id ? { ...p, ...updated } : p)),
+    };
+    saveToStorage(newData);
+  };
+
+  const deleteProject = (id: string) => {
+    const newData = {
+      ...data,
+      projects: data.projects.filter((p) => p.id !== id),
+    };
+    saveToStorage(newData);
+  };
+
+  // Inquiry CRUD
+  const addInquiry = (inquiryInput: Omit<ContactInquiry, 'id' | 'createdAt'>) => {
+    const newInquiry: ContactInquiry = {
+      ...inquiryInput,
+      id: `inq-${Date.now()}`,
+      createdAt: new Date().toLocaleDateString('fa-IR'),
+    };
+    const newData = {
+      ...data,
+      inquiries: [newInquiry, ...data.inquiries],
+    };
+    saveToStorage(newData);
+  };
+
+  const updateInquiryStatus = (id: string, status: ContactInquiry['status']) => {
+    const newData = {
+      ...data,
+      inquiries: data.inquiries.map((inq) => (inq.id === id ? { ...inq, status } : inq)),
+    };
+    saveToStorage(newData);
+  };
+
+  const deleteInquiry = (id: string) => {
+    const newData = {
+      ...data,
+      inquiries: data.inquiries.filter((inq) => inq.id !== id),
+    };
+    saveToStorage(newData);
+  };
+
   const resetToDefaults = () => {
     setData(INITIAL_COMPANY_DATA);
     try {
@@ -86,6 +207,19 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     downloadAnchor.remove();
   };
 
+  const importDataFromJson = (jsonString: string): boolean => {
+    try {
+      const parsed = JSON.parse(jsonString);
+      if (parsed && parsed.profile && parsed.services) {
+        saveToStorage(parsed);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <CompanyContext.Provider
       value={{
@@ -94,6 +228,16 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         toggleSampleNotice,
         resetToDefaults,
         exportDataAsJson,
+        importDataFromJson,
+        addVideo,
+        updateVideo,
+        deleteVideo,
+        addProject,
+        updateProject,
+        deleteProject,
+        addInquiry,
+        updateInquiryStatus,
+        deleteInquiry,
         isCustomizerOpen,
         setIsCustomizerOpen,
         selectedProjectId,
