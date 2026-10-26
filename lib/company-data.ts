@@ -91,6 +91,15 @@ export interface CompanyProfile {
   };
 }
 
+export interface AdminUser {
+  id: string;
+  username: string;
+  password: string;
+  fullName: string;
+  role: 'superadmin' | 'editor';
+  createdAt: string;
+}
+
 export const INITIAL_COMPANY_DATA: {
   profile: CompanyProfile;
   services: ServiceItem[];
@@ -100,7 +109,18 @@ export const INITIAL_COMPANY_DATA: {
   milestones: MilestoneItem[];
   differentiators: { title: string; desc: string; iconKey: string }[];
   newsArticles: { id: string; title: string; summary: string; date: string; category: string; readTime: string }[];
+  admins: AdminUser[];
 } = {
+  admins: [
+    {
+      id: 'admin-1',
+      username: 'You',
+      password: 'You1431569@',
+      fullName: 'مدیر ارشد (You)',
+      role: 'superadmin',
+      createdAt: '۱۴۰۴/۰۱/۰۱',
+    },
+  ],
   profile: {
     companyName: 'نگار آبتاب آبانگاه',
     brandTitle: 'نگار آبتاب آبانگاه',

@@ -132,13 +132,6 @@ export default function TutorialsPage() {
               <span aria-hidden="true">/</span>
               <span className="text-[#575655]">ویدئوهای آموزشی و کپشن‌ها</span>
             </div>
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#111111] bg-white hover:bg-neutral-100 rounded-lg border border-[rgba(17,17,17,0.08)] transition-colors"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#e8400d]" />
-              <span>پنل مدیریت و افزودن ویدئو</span>
-            </Link>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#111111] tracking-tight">

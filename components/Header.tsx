@@ -94,18 +94,8 @@ export function Header() {
             })}
           </nav>
 
-          {/* Zone 3: Primary Action & Quick Tools */}
+          {/* Zone 3: Mobile Menu Button */}
           <div className="flex items-center gap-2.5 shrink-0">
-            {/* Admin Panel Direct Link */}
-            <Link
-              href="/admin"
-              title="پنل مدیریت پیشرفته سایت"
-              className="px-2.5 py-1.5 text-[#575655] hover:text-[#111111] hover:bg-[#F6F5F3] rounded-lg transition-colors border border-[rgba(17,17,17,0.08)] flex items-center gap-1.5 text-xs font-semibold"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#e8400d]" />
-              <span className="hidden sm:inline">پنل ادمین</span>
-            </Link>
-
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

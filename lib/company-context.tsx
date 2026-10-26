@@ -7,6 +7,7 @@ import {
   ProjectItem,
   VideoTutorial,
   ContactInquiry,
+  AdminUser,
 } from './company-data';
 import { formatPersianDate } from './utils';
 
@@ -29,6 +30,11 @@ interface CompanyContextType {
   addInquiry: (inquiry: Omit<ContactInquiry, 'id' | 'createdAt'>) => void;
   updateInquiryStatus: (id: string, status: ContactInquiry['status']) => void;
   deleteInquiry: (id: string) => void;
+  // Admin User Management
+  addAdmin: (admin: Omit<AdminUser, 'id' | 'createdAt'>) => void;
+  updateAdmin: (id: string, updated: Partial<AdminUser>) => void;
+  deleteAdmin: (id: string) => boolean;
+  validateAdminCredentials: (username: string, password: string) => AdminUser | null;
   // Modals & Selectors
   isCustomizerOpen: boolean;
   setIsCustomizerOpen: (open: boolean) => void;
@@ -54,12 +60,13 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Ensure videos and inquiries arrays exist if restoring from v1
+        // Ensure videos, inquiries, and admins arrays exist if restoring from previous versions
         const merged: typeof INITIAL_COMPANY_DATA = {
           ...INITIAL_COMPANY_DATA,
           ...parsed,
           videos: parsed.videos || INITIAL_COMPANY_DATA.videos,
           inquiries: parsed.inquiries || INITIAL_COMPANY_DATA.inquiries,
+          admins: parsed.admins && parsed.admins.length > 0 ? parsed.admins : INITIAL_COMPANY_DATA.admins,
         };
         queueMicrotask(() => {
           setData(merged);
@@ -188,6 +195,61 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     saveToStorage(newData);
   };
 
+  // Admin User CRUD
+  const addAdmin = (adminInput: Omit<AdminUser, 'id' | 'createdAt'>) => {
+    const newAdmin: AdminUser = {
+      ...adminInput,
+      id: `admin-${Date.now()}`,
+      createdAt: formatPersianDate(new Date().toISOString()),
+    };
+    const newData = {
+      ...data,
+      admins: [newAdmin, ...data.admins],
+    };
+    saveToStorage(newData);
+  };
+
+  const updateAdmin = (id: string, updated: Partial<AdminUser>) => {
+    const newData = {
+      ...data,
+      admins: data.admins.map((adm) => (adm.id === id ? { ...adm, ...updated } : adm)),
+    };
+    saveToStorage(newData);
+  };
+
+  const deleteAdmin = (id: string): boolean => {
+    // Prevent deleting primary 'You' default admin
+    const target = data.admins.find((a) => a.id === id);
+    if (target?.username === 'You' || data.admins.length <= 1) {
+      return false;
+    }
+    const newData = {
+      ...data,
+      admins: data.admins.filter((adm) => adm.id !== id),
+    };
+    saveToStorage(newData);
+    return true;
+  };
+
+  const validateAdminCredentials = (username: string, password: string): AdminUser | null => {
+    const trimmedUser = username.trim();
+    const trimmedPass = password.trim();
+
+    // Check in stored admins
+    const match = data.admins.find(
+      (a) => a.username.toLowerCase() === trimmedUser.toLowerCase() && a.password === trimmedPass
+    );
+
+    if (match) return match;
+
+    // Hardcoded fallback for default 'You' / 'You1431569@' credentials
+    if (trimmedUser.toLowerCase() === 'you' && trimmedPass === 'You1431569@') {
+      return INITIAL_COMPANY_DATA.admins[0];
+    }
+
+    return null;
+  };
+
   const resetToDefaults = () => {
     setData(INITIAL_COMPANY_DATA);
     try {
@@ -238,6 +300,10 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         addInquiry,
         updateInquiryStatus,
         deleteInquiry,
+        addAdmin,
+        updateAdmin,
+        deleteAdmin,
+        validateAdminCredentials,
         isCustomizerOpen,
         setIsCustomizerOpen,
         selectedProjectId,

@@ -1,4 +1,4 @@
-// IndexedDB helper for saving and retrieving large video blobs locally without exceeding localStorage quota
+// IndexedDB & Server Host upload helper for video files
 
 const DB_NAME = 'negar_abtab_video_db';
 const STORE_NAME = 'video_files';
@@ -23,6 +23,32 @@ function openDB(): Promise<IDBDatabase> {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
+}
+
+/**
+ * Uploads video file to the server API route (/api/upload) so it persists on the host.
+ * Returns the host server URL (/api/videos/[filename]) or null if server fails.
+ */
+export async function uploadVideoToServerHost(file: File): Promise<string | null> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url) {
+        return data.url as string;
+      }
+    }
+  } catch (error) {
+    console.warn('Host upload endpoint warning (using client fallback):', error);
+  }
+  return null;
 }
 
 export async function saveVideoFile(id: string, file: Blob): Promise<void> {

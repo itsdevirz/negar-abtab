@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCompany } from '@/lib/company-context';
@@ -9,6 +9,7 @@ import {
   VideoTutorial,
   ProjectItem,
   ContactInquiry,
+  AdminUser,
 } from '@/lib/company-data';
 import {
   LayoutDashboard,
@@ -23,6 +24,7 @@ import {
   CheckCircle2,
   Clock,
   Eye,
+  EyeOff,
   Download,
   Upload,
   RotateCcw,
@@ -37,8 +39,19 @@ import {
   ShieldCheck,
   UploadCloud,
   Film,
+  LogOut,
+  Users,
+  Key,
+  Lock,
+  Shield,
+  UserCheck,
 } from 'lucide-react';
-import { saveVideoFile, deleteVideoFile, getVideoBlob } from '@/lib/video-storage';
+import {
+  saveVideoFile,
+  deleteVideoFile,
+  getVideoBlob,
+  uploadVideoToServerHost,
+} from '@/lib/video-storage';
 import { GooSwitch } from '@/components/ui/goo-switch';
 import { FileUpload } from '@/components/ui/file-upload';
 import { DeleteButton } from '@/components/ui/delete-button';
@@ -58,12 +71,87 @@ export default function AdminPage() {
     exportDataAsJson,
     importDataFromJson,
     resetToDefaults,
+    addAdmin,
+    updateAdmin,
+    deleteAdmin,
+    validateAdminCredentials,
   } = useCompany();
+
+  // Authentication State
+  const [authAdminUser, setAuthAdminUser] = useState<AdminUser | null>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
+  const [loginUsername, setLoginUsername] = useState('You');
+  const [loginPassword, setLoginPassword] = useState('You1431569@');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  // Check persisted session on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('negar_admin_auth');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.username) {
+          queueMicrotask(() => {
+            setAuthAdminUser(parsed);
+          });
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      queueMicrotask(() => {
+        setAuthLoaded(true);
+      });
+    }
+  }, []);
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+
+    const user = validateAdminCredentials(loginUsername, loginPassword);
+    if (user) {
+      setAuthAdminUser(user);
+      try {
+        localStorage.setItem('negar_admin_auth', JSON.stringify(user));
+      } catch {
+        // ignore
+      }
+    } else {
+      setLoginError('نام کاربری یا رمز عبور اشتباه است. لطفاً اطلاعات واردشده را بررسی فرمایید.');
+    }
+  };
+
+  const handleLogout = () => {
+    setAuthAdminUser(null);
+    try {
+      localStorage.removeItem('negar_admin_auth');
+    } catch {
+      // ignore
+    }
+  };
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'videos' | 'projects' | 'inquiries' | 'settings' | 'backup'
+    'overview' | 'videos' | 'projects' | 'inquiries' | 'settings' | 'backup' | 'admins'
   >('overview');
+
+  // Admin User Management Form State
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
+  const [adminFormData, setAdminFormData] = useState<{
+    username: string;
+    password: string;
+    fullName: string;
+    role: 'superadmin' | 'editor';
+  }>({
+    username: '',
+    password: '',
+    fullName: '',
+    role: 'editor',
+  });
+  const [showAdminPassMap, setShowAdminPassMap] = useState<Record<string, boolean>>({});
 
   // Notification Banner
   const [notice, setNotice] = useState<string | null>(null);
@@ -268,27 +356,34 @@ export default function AdminPage() {
     }
 
     const videoId = editingVideoId || `vid-${Date.now()}`;
+    let finalVideoUrl = videoFormData.videoUrl;
 
-    // If a new video file was uploaded, save it into browser IndexedDB
+    // If a new video file was uploaded, save it to server host (/api/upload) & IndexedDB
     if (selectedVideoFile) {
+      const serverHostUrl = await uploadVideoToServerHost(selectedVideoFile);
+      if (serverHostUrl) {
+        finalVideoUrl = serverHostUrl;
+      } else if (videoPreviewUrl) {
+        finalVideoUrl = videoPreviewUrl;
+      }
       await saveVideoFile(videoId, selectedVideoFile);
     }
 
     if (editingVideoId) {
       updateVideo(editingVideoId, {
         ...videoFormData,
-        videoUrl: selectedVideoFile ? videoPreviewUrl : videoFormData.videoUrl,
+        videoUrl: finalVideoUrl,
       });
-      showNotice('ویدئوی آموزشی با موفقیت به‌روزرسانی شد.');
+      showNotice('ویدئوی آموزشی با موفقیت در هاست و دیتابیس سیستم به‌روزرسانی شد.');
     } else {
       addVideo({
         ...videoFormData,
         id: videoId,
         videoUrl:
-          videoPreviewUrl ||
+          finalVideoUrl ||
           'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
       });
-      showNotice('ویدئوی آموزشی جدید همراه با فایل و کپشن با موفقیت ذخیره شد.');
+      showNotice('ویدئوی آموزشی جدید با موفقیت روی هاست آپلود و ذخیره گردید.');
     }
     setVideoModalOpen(false);
     setSelectedVideoFile(null);
@@ -424,7 +519,194 @@ export default function AdminPage() {
     }
   };
 
+  // Admin User Handlers
+  const handleOpenAddAdmin = () => {
+    setEditingAdminId(null);
+    setAdminFormData({
+      username: '',
+      password: '',
+      fullName: '',
+      role: 'editor',
+    });
+    setAdminModalOpen(true);
+  };
+
+  const handleOpenEditAdmin = (adminUser: AdminUser) => {
+    setEditingAdminId(adminUser.id);
+    setAdminFormData({
+      username: adminUser.username,
+      password: adminUser.password,
+      fullName: adminUser.fullName,
+      role: adminUser.role,
+    });
+    setAdminModalOpen(true);
+  };
+
+  const handleSaveAdmin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminFormData.username.trim() || !adminFormData.password.trim()) {
+      alert('لطفاً نام کاربری و رمز عبور را وارد فرمایید.');
+      return;
+    }
+
+    if (editingAdminId) {
+      updateAdmin(editingAdminId, adminFormData);
+      showNotice(`مشخصات مدیر «${adminFormData.fullName || adminFormData.username}» به‌روزرسانی شد.`);
+    } else {
+      addAdmin(adminFormData);
+      showNotice(`حساب مدیر جدید «${adminFormData.fullName || adminFormData.username}» با موفقیت تعریف گردید.`);
+    }
+    setAdminModalOpen(false);
+  };
+
+  const handleDeleteAdminUser = (id: string, name: string) => {
+    if (confirm(`آیا از حذف حساب مدیریت «${name}» اطمینان دارید؟`)) {
+      const ok = deleteAdmin(id);
+      if (ok) {
+        showNotice(`حساب مدیر «${name}» با موفقیت حذف شد.`);
+      } else {
+        alert('حساب ادمین اصلی (You) یا تنها ادمین سیستم قابل حذف نمی‌باشد.');
+      }
+    }
+  };
+
   const newInquiriesCount = data.inquiries.filter((i) => i.status === 'new').length;
+
+  // Render Login Gate Screen if NOT Authenticated
+  if (!authLoaded) {
+    return (
+      <div className="min-h-screen bg-[#111111] flex items-center justify-center p-6 text-white font-mono text-xs">
+        در حال بررسی سطح دسترسی مدیریت...
+      </div>
+    );
+  }
+
+  if (!authAdminUser) {
+    return (
+      <div className="min-h-screen bg-[#111111] flex items-center justify-center p-4 sm:p-6 text-white dir-rtl relative overflow-hidden">
+        {/* Background glow effects */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#e8400d]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-80 h-80 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="w-full max-w-md bg-[#1a1918] border border-[rgba(255,255,255,0.12)] rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6">
+          {/* Header & Logo */}
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 p-2 shadow-inner">
+              <Image
+                src={data.profile.logoUrl || '/assets/aistudio/file_00000000c9e481f4872f5bd5f71094a4_1__c7980156.png'}
+                alt={data.profile.companyName}
+                width={56}
+                height={56}
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+
+            <div>
+              <span className="text-[11px] font-mono font-bold text-[#e8400d] uppercase tracking-wider block">
+                سامانه اتوماسیون و مدیریت ارشد
+              </span>
+              <h1 className="text-xl sm:text-2xl font-black text-white mt-1">
+                ورود به پنل مدیریت {data.profile.companyName}
+              </h1>
+            </div>
+          </div>
+
+          {/* Credentials Info Box */}
+          <div className="p-3.5 bg-white/5 rounded-xl border border-white/10 text-xs space-y-1">
+            <div className="flex items-center justify-between text-[#FFEF99] font-semibold">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-[#e8400d]" />
+                اطلاعات ورود ادمین پیش‌فرض:
+              </span>
+              <span className="font-mono text-[10px] bg-white/10 px-2 py-0.5 rounded">SuperAdmin</span>
+            </div>
+            <div className="text-[11px] text-[#c5c4c1] pt-1 space-y-0.5 font-mono" dir="ltr">
+              <div>نام کاربری (Username): <strong className="text-white">You</strong></div>
+              <div>رمز عبور (Password): <strong className="text-white">You1431569@</strong></div>
+            </div>
+          </div>
+
+          {/* Error Message Banner */}
+          {loginError && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 bg-red-500/15 border border-red-500/30 text-red-300 rounded-xl text-xs flex items-center gap-2"
+            >
+              <X className="w-4 h-4 shrink-0 text-red-400" />
+              <span>{loginError}</span>
+            </motion.div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-xs font-semibold text-[#c5c4c1] mb-1.5">
+                نام کاربری (Username)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  placeholder="You"
+                  className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-[#e8400d] text-white rounded-xl focus:outline-hidden font-mono text-sm pl-10"
+                  required
+                />
+                <Lock className="w-4 h-4 text-[#6D6C6B] absolute left-3 top-3 pointer-events-none" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#c5c4c1] mb-1.5">
+                رمز عبور (Password)
+              </label>
+              <div className="relative">
+                <input
+                  type={showLoginPassword ? 'text' : 'password'}
+                  dir="ltr"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="You1431569@"
+                  className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-[#e8400d] text-white rounded-xl focus:outline-hidden font-mono text-sm pl-10 pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute left-3 top-3 text-[#6D6C6B] hover:text-white transition-colors"
+                >
+                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+                <Key className="w-4 h-4 text-[#6D6C6B] absolute right-3 top-3 pointer-events-none" />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-[#e8400d] hover:bg-[#d0380a] active:bg-[#b83008] text-white font-bold text-xs rounded-xl transition-all shadow-md hover:scale-[1.01] flex items-center justify-center gap-2 cursor-pointer mt-2"
+            >
+              <UserCheck className="w-4 h-4" />
+              <span>ورود به پنل مدیریت</span>
+            </button>
+          </form>
+
+          {/* Footer Back Link */}
+          <div className="pt-2 text-center border-t border-white/10">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-[#a6a5a2] hover:text-white transition-colors"
+            >
+              <ArrowUpLeft className="w-3.5 h-3.5" />
+              <span>انصراف و بازگشت به صفحه اصلی سایت</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F6F5F3] pb-24">
@@ -458,19 +740,28 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/tutorials"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors border border-white/10"
+          <div className="flex items-center gap-3">
+            <div className="text-right text-xs hidden sm:block">
+              <span className="font-bold text-white block">{authAdminUser.fullName}</span>
+              <span className="text-[10px] text-[#a6a5a2]">
+                نقش: {authAdminUser.role === 'superadmin' ? 'مدیر ارشد' : 'ویرایشگر'} ({authAdminUser.username})
+              </span>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs font-semibold rounded-xl border border-red-500/30 transition-colors flex items-center gap-1.5 shrink-0"
+              title="خروج از حساب مدیریت"
             >
-              <Video className="w-3.5 h-3.5 text-[#FFEF99]" />
-              <span>مشاهده بخش ویدئوها</span>
-            </Link>
+              <LogOut className="w-3.5 h-3.5" />
+              <span>خروج</span>
+            </button>
+
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#111111] bg-white hover:bg-neutral-100 rounded-lg transition-colors shadow-2xs"
             >
-              <span>مشاهده سایت اصلی</span>
+              <span>مشاهده سایت</span>
               <ArrowUpLeft className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -585,6 +876,23 @@ export default function AdminPage() {
                 <Database className="w-4 h-4 text-amber-600" />
                 <span>پشتیبان‌گیری و خروجی</span>
               </div>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('admins')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
+                activeTab === 'admins'
+                  ? 'bg-[#111111] text-white'
+                  : 'text-[#575655] hover:bg-[#F6F5F3] hover:text-[#111111]'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Users className="w-4 h-4 text-purple-600" />
+                <span>مدیریت مدیران و دسترسی‌ها</span>
+              </div>
+              <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-white/20">
+                {data.admins.length}
+              </span>
             </button>
           </div>
 
@@ -1524,6 +1832,107 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
+
+            {/* ==============================================================
+                TAB 7: ADMIN USERS & CREDENTIALS MANAGEMENT
+            ============================================================== */}
+            {activeTab === 'admins' && (
+              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[rgba(17,17,17,0.08)] shadow-2xs space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[rgba(17,17,17,0.06)]">
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111111]">
+                      مدیریت حساب‌های مدیران و سطوح دسترسی
+                    </h3>
+                    <p className="text-xs text-[#575655] mt-0.5">
+                      تعریف مدیران جدید، ویرایش کلمه عبور و مدیریت مجوزهای ورود به پنل اتوماسیون
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleOpenAddAdmin}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#111111] hover:bg-[#272625] rounded-xl transition-colors shadow-xs"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>تعریف ادمین جدید</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {data.admins.map((adm) => {
+                    const isShowPass = showAdminPassMap[adm.id] || false;
+                    return (
+                      <div
+                        key={adm.id}
+                        className="p-4 sm:p-5 rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[#F6F5F3]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-bold text-[#111111]">{adm.fullName}</span>
+                            <span
+                              className="text-xs font-mono font-bold text-[#e8400d] bg-white px-2 py-0.5 rounded border border-[rgba(17,17,17,0.08)]"
+                              dir="ltr"
+                            >
+                              @{adm.username}
+                            </span>
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
+                                adm.role === 'superadmin'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}
+                            >
+                              {adm.role === 'superadmin' ? 'مدیر ارشد (SuperAdmin)' : 'ویرایشگر محتوا'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-xs text-[#575655] pt-1 flex-wrap">
+                            <div className="flex items-center gap-1.5 font-mono">
+                              <Lock className="w-3.5 h-3.5 text-[#6D6C6B]" />
+                              <span>رمز عبور:</span>
+                              <strong className="text-[#111111]">
+                                {isShowPass ? adm.password : '••••••••'}
+                              </strong>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowAdminPassMap({
+                                    ...showAdminPassMap,
+                                    [adm.id]: !isShowPass,
+                                  })
+                                }
+                                className="p-1 text-[#6D6C6B] hover:text-[#111111] transition-colors"
+                                title="نمایش/مخفی‌سازی رمز عبور"
+                              >
+                                {isShowPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                            <span aria-hidden="true">·</span>
+                            <span className="text-[#6D6C6B]">تاریخ ایجاد: {adm.createdAt}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => handleOpenEditAdmin(adm)}
+                            className="p-2 text-[#575655] hover:text-[#111111] hover:bg-white rounded-xl transition-colors border border-[rgba(17,17,17,0.08)] shadow-2xs"
+                            title="ویرایش مشخصات مدیر"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+
+                          {adm.username !== 'You' && data.admins.length > 1 && (
+                            <DeleteButton
+                              onDelete={() => handleDeleteAdminUser(adm.id, adm.fullName || adm.username)}
+                              itemTitle={adm.fullName || adm.username}
+                              size="sm"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -1827,6 +2236,115 @@ export default function AdminPage() {
                     className="px-5 py-2 bg-[#111111] text-white font-semibold rounded-lg hover:bg-[#272625]"
                   >
                     ذخیره پروژه
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ==============================================================
+          MODAL: ADD / EDIT ADMIN USER
+      ============================================================== */}
+      <AnimatePresence>
+        {adminModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-[rgba(17,17,17,0.1)] overflow-hidden my-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 sm:p-5 bg-[#F6F5F3] border-b border-[rgba(17,17,17,0.08)] flex items-center justify-between">
+                <h3 className="font-bold text-sm sm:text-base text-[#111111]">
+                  {editingAdminId ? 'ویرایش مشخصات ادمین' : 'تعریف حساب مدیر جدید'}
+                </h3>
+                <button
+                  onClick={() => setAdminModalOpen(false)}
+                  className="p-1 text-[#575655] hover:text-[#111111] rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveAdmin} className="p-6 space-y-4 text-xs">
+                <div>
+                  <label className="block font-medium text-[#111111] mb-1">
+                    نام و نام خانوادگی مدیر <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="مثال: مهندس احمدی"
+                    value={adminFormData.fullName}
+                    onChange={(e) => setAdminFormData({ ...adminFormData, fullName: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg border-[rgba(17,17,17,0.12)] focus:border-[#e8400d] focus:outline-hidden"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-medium text-[#111111] mb-1">
+                    نام کاربری (Username) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    dir="ltr"
+                    placeholder="مثال: AdminUser"
+                    value={adminFormData.username}
+                    onChange={(e) => setAdminFormData({ ...adminFormData, username: e.target.value })}
+                    className="w-full px-3 py-2 font-mono border rounded-lg border-[rgba(17,17,17,0.12)] focus:border-[#e8400d] focus:outline-hidden"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-medium text-[#111111] mb-1">
+                    رمز عبور (Password) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    dir="ltr"
+                    placeholder="رمز عبور ادمین..."
+                    value={adminFormData.password}
+                    onChange={(e) => setAdminFormData({ ...adminFormData, password: e.target.value })}
+                    className="w-full px-3 py-2 font-mono border rounded-lg border-[rgba(17,17,17,0.12)] focus:border-[#e8400d] focus:outline-hidden"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-medium text-[#111111] mb-1">نقش و سطح دسترسی</label>
+                  <select
+                    value={adminFormData.role}
+                    onChange={(e) => setAdminFormData({ ...adminFormData, role: e.target.value as 'superadmin' | 'editor' })}
+                    className="w-full px-3 py-2 border rounded-lg border-[rgba(17,17,17,0.12)] focus:border-[#e8400d] focus:outline-hidden"
+                  >
+                    <option value="superadmin">مدیر ارشد (SuperAdmin - دسترسی کامل)</option>
+                    <option value="editor">ویرایشگر محتوا (Editor)</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-[rgba(17,17,17,0.06)]">
+                  <button
+                    type="button"
+                    onClick={() => setAdminModalOpen(false)}
+                    className="px-4 py-2 border border-[rgba(17,17,17,0.12)] rounded-xl text-xs text-[#575655] hover:text-[#111111] hover:bg-[#F6F5F3] transition-colors"
+                  >
+                    انصراف
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-[#111111] text-white text-xs font-semibold rounded-xl hover:bg-[#272625] transition-colors shadow-xs"
+                  >
+                    ذخیره مشخصات مدیر
                   </button>
                 </div>
               </form>
