@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { CORS_HEADERS } from '@/lib/api-config';
 
 function getUploadDir() {
   return path.join(process.cwd(), 'public', 'uploads', 'videos');
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: CORS_HEADERS,
+  });
 }
 
 export async function GET(
@@ -15,7 +23,10 @@ export async function GET(
     const filename = resolvedParams.filename;
 
     if (!filename || filename.includes('..')) {
-      return NextResponse.json({ error: 'نام فایل نامعتبر است' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'نام فایل نامعتبر است' },
+        { status: 400, headers: CORS_HEADERS }
+      );
     }
 
     const filePath = path.join(getUploadDir(), filename);
@@ -23,7 +34,10 @@ export async function GET(
     try {
       await fs.access(filePath);
     } catch {
-      return NextResponse.json({ error: 'فایل ویدئو روی هاست یافت نشد' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'فایل ویدئو روی سرور یافت نشد' },
+        { status: 404, headers: CORS_HEADERS }
+      );
     }
 
     const fileBuffer = await fs.readFile(filePath);
@@ -36,6 +50,7 @@ export async function GET(
 
     return new NextResponse(fileBuffer, {
       headers: {
+        ...CORS_HEADERS,
         'Content-Type': contentType,
         'Content-Length': fileBuffer.length.toString(),
         'Accept-Ranges': 'bytes',
@@ -44,6 +59,9 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error serving host video:', error);
-    return NextResponse.json({ error: 'خطا در بارگیری ویدئو از هاست' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'خطا در بارگیری ویدئو از سرور' },
+      { status: 500, headers: CORS_HEADERS }
+    );
   }
 }

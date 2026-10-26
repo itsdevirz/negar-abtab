@@ -25,16 +25,19 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
+import { getApiUrl } from './api-config';
+
 /**
- * Uploads video file to the server API route (/api/upload) so it persists on the host.
- * Returns the host server URL (/api/videos/[filename]) or null if server fails.
+ * Uploads video file to the server API route (/api/upload) so it persists on the backend (141.11.32.127).
+ * Returns the server URL (/api/videos/[filename] or full URL) or null if server fails.
  */
 export async function uploadVideoToServerHost(file: File): Promise<string | null> {
   try {
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch('/api/upload', {
+    const uploadEndpoint = getApiUrl('/api/upload');
+    const res = await fetch(uploadEndpoint, {
       method: 'POST',
       body: formData,
     });
@@ -42,7 +45,11 @@ export async function uploadVideoToServerHost(file: File): Promise<string | null
     if (res.ok) {
       const data = await res.json();
       if (data.url) {
-        return data.url as string;
+        // Return full URL if uploaded to remote server
+        if (data.url.startsWith('http://') || data.url.startsWith('https://')) {
+          return data.url;
+        }
+        return getApiUrl(data.url);
       }
     }
   } catch (error) {
