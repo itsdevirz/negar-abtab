@@ -1,7 +1,5 @@
-'use client';
-
 import React from 'react';
-import { usePathname } from 'next/navigation';
+import { useLocation } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { SampleDataBanner } from '@/components/SampleDataBanner';
@@ -9,7 +7,7 @@ import { AdminCustomizer } from '@/components/AdminCustomizer';
 import { ProjectDetailModal } from '@/components/ProjectDetailModal';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const isAdmin = pathname?.startsWith('/admin');
 
   // If in Admin Panel, only render the Admin's own interface with zero main website navbar or footer

@@ -1,14 +1,10 @@
-'use client';
-
 import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+import { Link, useLocation } from 'react-router-dom';
 import { useCompany } from '@/lib/company-context';
-import { usePathname } from 'next/navigation';
 import { Phone, Mail, MapPin, Clock, ArrowUpLeft, ShieldCheck, HeartHandshake } from 'lucide-react';
 
 export function Footer() {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const { data, setIsCustomizerOpen } = useCompany();
 
   if (pathname?.startsWith('/admin')) {
@@ -23,11 +19,9 @@ export function Footer() {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
               <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white p-1 flex items-center justify-center shrink-0 border border-white/20 shadow-sm">
-                <Image
+                <img
                   src={data.profile.logoUrl || '/assets/aistudio/file_00000000c9e481f4872f5bd5f71094a4_1__c7980156.png'}
                   alt={data.profile.companyName}
-                  width={48}
-                  height={48}
                   className="w-full h-full object-contain"
                   referrerPolicy="no-referrer"
                 />
@@ -62,37 +56,37 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-white tracking-wider">صفحات اصلی</h4>
             <ul className="space-y-2 text-sm text-[#c5c4c1]">
               <li>
-                <Link href="/" className="hover:text-white transition-colors">
+                <Link to="/" className="hover:text-white transition-colors">
                   صفحه اصلی
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-white transition-colors">
+                <Link to="/about" className="hover:text-white transition-colors">
                   درباره شرکت و اهداف
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="hover:text-white transition-colors">
+                <Link to="/services" className="hover:text-white transition-colors">
                   خدمات و حوزه‌های تخصصی
                 </Link>
               </li>
               <li>
-                <Link href="/projects" className="hover:text-white transition-colors">
+                <Link to="/projects" className="hover:text-white transition-colors">
                   آرشیو پروژه‌ها و نمونه‌کارها
                 </Link>
               </li>
               <li>
-                <Link href="/records" className="hover:text-white transition-colors">
+                <Link to="/records" className="hover:text-white transition-colors">
                   سوابق، افتخارات و خط زمانی
                 </Link>
               </li>
               <li>
-                <Link href="/tutorials" className="hover:text-white transition-colors">
+                <Link to="/tutorials" className="hover:text-white transition-colors">
                   آموزش و ویدئوهای مهندسی
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-white transition-colors">
+                <Link to="/contact" className="hover:text-white transition-colors">
                   ارتباط و استعلام همکاری
                 </Link>
               </li>
@@ -105,7 +99,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-[#c5c4c1]">
               {data.services.map((s) => (
                 <li key={s.id}>
-                  <Link href={`/services#${s.id}`} className="hover:text-white transition-colors">
+                  <Link to={`/services#${s.id}`} className="hover:text-white transition-colors">
                     {s.title}
                   </Link>
                 </li>
@@ -148,13 +142,13 @@ export function Footer() {
           </p>
           <div className="flex items-center gap-4">
             <Link
-              href="/admin"
+              to="/admin"
               className="text-[#c5c4c1] hover:text-[#e8400d] font-semibold underline underline-offset-4 transition-colors"
             >
               پنل مدیریت پیشرفته سایت
             </Link>
             <span aria-hidden="true">·</span>
-            <Link href="/contact" className="hover:text-white transition-colors">
+            <Link to="/contact" className="hover:text-white transition-colors">
               حریم خصوصی و شرایط همکاری
             </Link>
           </div>

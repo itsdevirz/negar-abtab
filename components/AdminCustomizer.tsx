@@ -1,13 +1,11 @@
-'use client';
-
 import React, { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useLocation } from 'react-router-dom';
 import { useCompany } from '@/lib/company-context';
 import { X, Save, RotateCcw, Download, Check, SlidersHorizontal } from 'lucide-react';
 import { GooSwitch } from '@/components/ui/goo-switch';
 
 export function AdminCustomizer() {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const {
     data,
     updateProfile,

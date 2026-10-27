@@ -1,12 +1,10 @@
-'use client';
-
 import React from 'react';
-import { usePathname } from 'next/navigation';
+import { useLocation } from 'react-router-dom';
 import { useCompany } from '@/lib/company-context';
 import { Info, SlidersHorizontal, X } from 'lucide-react';
 
 export function SampleDataBanner() {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const { data, toggleSampleNotice, setIsCustomizerOpen } = useCompany();
 
   if (pathname?.startsWith('/admin') || !data.profile.isSampleDataNotice) {

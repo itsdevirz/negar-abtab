@@ -1,69 +1,100 @@
-# راهنمای جامع استقرار فرانت‌اند استاتیک (public_html) و بک‌اند (سرور 141.11.32.127)
+# راهنمای کامل استقرار (Deployment Guide)
+## شرکت نگار آبتاب آبانگاه
 
-این راهنما مراحل دقیق انتقال پروژه شرکت نگار آبتاب آبانگاه به هاست استاتیک (`public_html`) و سرور اختصاصی بک‌اند (`141.11.32.127`) را توضیح می‌دهد.
-
----
-
-## 🏗️ ساختار سیستم
-
-1. **فرانت‌اند (Frontend)**:
-   - کامل بر روی هاست استاتیک در پوشه `public_html` قرار می‌گیرد.
-   - شامل تمامی صفحات HTML، CSS، تصویر و برنامه‌های جاوااسکریپتی بدون نیاز به Node.js روی هاست استاتیک.
-   - تمام فایل‌های ویدئویی پس از آپلود، در مرورگر کاربران به کمک **IndexedDB** و همچنین لینک مستقیم سرور نگهداری می‌شوند تا سرعت بارگذاری بالا باشد و پهنای باند هاست هدر نرود.
-
-2. **بک‌اند (Backend Server)**:
-   - سرور اختصاصی لینوکس با آی‌پی `141.11.32.127` و وب‌سرور Nginx.
-   - پردازش‌ها، آپلود ویدئوها و APIهای سیستم روی پورت ۳۰۰۰ (یا Nginx) اجرا می‌شوند.
+این پروژه به‌صورت **کاملاً مجزا (Decoupled)** طراحی شده است تا فرانت‌اند به راحتی روی **هاست استاتیک (public_html)** قرار گیرد و بخش پردازش بکند روی **سرور مجزا با آدرس آی‌پی 141.11.32.127** اجرا شود.
 
 ---
 
-## 📤 مرحله اول: راه‌اندازی بک‌اند روی سرور (141.11.32.127)
+## ۱. ساختار معماری پروژه
 
-1. **انتقال سورس کد به سرور `141.11.32.127`**:
-   سورس پروژه را در مسیر دلخواه مانند `/var/www/negar-backend` قرار دهید.
+1. **فرانت‌اند (Frontend - React Vite SPA)**
+   - خروجی استاتیک در پوشه `dist` تولید می‌شود که شامل فایل‌های HTML, JS, CSS و دارایی‌ها می‌باشد.
+   - کلیه درخواست‌های پردازش به آدرس بکند `http://141.11.32.127:5000` (یا `3000`) ارسال می‌شوند.
+   - آپلود فایل‌های ویدئویی به صورت فایل Blobs مستقیم در هاست (مرورگر/محیط استاتیک) ذخیره می‌شود تا سرور بکند سنگین نشود.
 
-2. **نصب وابستگی‌ها و اجرای برنامه**:
+2. **بکند (Backend - Express Node.js Server)**
+   - در پوشه `/backend` قرار دارد و روی آی‌پی `141.11.32.127` پورت `5000` اجرا می‌شود.
+   - مسئول احراز هویت ادمین (`You` / `You1431569@`)، ذخیره متادیتا و پاسخ به درخواست‌های REST API است.
+
+---
+
+## ۲. مراحل قرار دادن فرانت‌اند روی هاست استاتیک (public_html)
+
+1. دستور زیر را برای ساخت نسخه خروجی اجرا کنید:
    ```bash
-   cd /var/www/negar-backend
-   npm install
    npm run build
-   npm start
    ```
-   *توصیه:* برای اجرای همیشگی در پس‌زمینه سرور از `pm2` استفاده کنید:
+2. محتویات پوشه `dist` که شامل فایل `index.html` و پوشه `assets` است را کپی کرده و در پوشه `public_html` هاست استاتیک خود آپلود کنید.
+3. فایل `.htaccess` زیر را در پوشه `public_html` قرار دهید تا تمام مسیرهای SPA (مانند `/admin`, `/services`, `/projects`) به `index.html` هدایت شوند:
+
+   ```apache
+   <IfModule mod_rewrite.c>
+     RewriteEngine On
+     RewriteBase /
+     RewriteRule ^index\.html$ - [L]
+     RewriteCond %{REQUEST_FILENAME} !-f
+     RewriteCond %{REQUEST_FILENAME} !-d
+     RewriteRule . /index.html [L]
+   </IfModule>
+   ```
+
+---
+
+## ۳. مراحل راه‌اندازی بکند روی سرور (141.11.32.127)
+
+1. پوشه `/backend` را روی سرور منتقل کنید.
+2. بسته‌ها را روی سرور نصب کنید:
+   ```bash
+   cd backend
+   npm install express cors
+   ```
+3. بکند را با `pm2` به صورت همیشگی اجرا کنید:
    ```bash
    npm install -g pm2
-   pm2 start npm --name "negar-backend" -- start
-   ```
-
-3. **تنظیم Nginx روی سرور `141.11.32.127`**:
-   فایل تنظیمات نمونه در مسیر `server-config/nginx.conf` پروژه قرار دارد. آن را در سرور کپی کنید:
-   ```bash
-   sudo cp server-config/nginx.conf /etc/nginx/sites-available/negar-backend
-   sudo ln -s /etc/nginx/sites-available/negar-backend /etc/nginx/sites-enabled/
-   sudo nginx -t
-   sudo systemctl restart nginx
+   pm2 start server.js --name "negar-backend"
+   pm2 save
    ```
 
 ---
 
-## 🌐 مرحله دوم: انتقال فرانت‌اند به هاست استاتیک (`public_html`)
+## ۴. پیکربندی Nginx روی سرور (141.11.32.127)
 
-1. **خروجی گرفتن از فرانت‌اند**:
-   روی سیستم خود یا سرور خروجی خروجی بگیرید:
-   ```bash
-   npm run build
-   ```
-   فایل‌های درون پوشه `.next` یا فایل‌های استاتیک پروژه آماده انتقال به هاست هستند.
+فایل کانفیگ Nginx زیر را در `/etc/nginx/sites-available/negar-backend` قرار داده و فعال کنید:
 
-2. **آپلود در `public_html`**:
-   محتوای خروجی پروژه را مستقیم در پوشه `public_html` هاست خود آپلود نمایید.
+```nginx
+server {
+    listen 80;
+    server_name 141.11.32.127;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+
+        # CORS Headers
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+    }
+}
+```
 
 ---
 
-## 🔐 اطلاعات ورود پنل مدیریت (روت `/admin`)
-
-- **آدرس پنل مدیریت**: `https://your-domain.com/admin` (یا آدرس هاست شما)
-- **نام کاربری (Username)**: `You`
-- **رمز عبور (Password)**: `You1431569@`
-
-*نکته:* می‌توانید از داخل پنل مدیریت در زبانه «مدیریت مدیران و دسترسی‌ها»، ادمین‌های جدید اضافه کرده یا رمز عبور فعلی را تغییر دهید.
+## ۵. مشخصات پیش‌فرض پنل مدیریت
+- **آدرس:** `http://your-domain.ir/admin`
+- **نام کاربری:** `You`
+- **رمز عبور:** `You1431569@`

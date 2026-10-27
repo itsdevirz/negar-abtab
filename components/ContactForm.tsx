@@ -1,7 +1,6 @@
-'use client';
-
 import React, { useState } from 'react';
 import { useCompany } from '@/lib/company-context';
+import { getApiUrl } from '@/lib/api-config';
 import { Send, CheckCircle2, AlertCircle, Copy, Check } from 'lucide-react';
 
 export function ContactForm() {
@@ -68,7 +67,7 @@ export function ContactForm() {
     setSubmitResult(null);
 
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch(getApiUrl('/api/inquiries'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

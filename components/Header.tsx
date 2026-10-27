@@ -1,15 +1,11 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { Link, useLocation } from 'react-router-dom';
 import { useCompany } from '@/lib/company-context';
 import { Menu, X, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function Header() {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const { data, setIsCustomizerOpen } = useCompany();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -49,16 +45,13 @@ export function Header() {
         <div className="flex items-center justify-between gap-6">
           {/* Zone 1: Single text element Brand Zone with Logo */}
           <Link
-            href="/"
+            to="/"
             className="flex items-center gap-3 text-lg sm:text-xl font-bold tracking-tight text-[#111111] hover:text-[#e8400d] transition-colors whitespace-nowrap shrink-0 group"
           >
             <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-2xs border border-[rgba(17,17,17,0.08)] bg-white shrink-0 flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform">
-              <Image
+              <img
                 src={data.profile.logoUrl || '/assets/aistudio/file_00000000c9e481f4872f5bd5f71094a4_1__c7980156.png'}
                 alt={data.profile.brandTitle}
-                width={48}
-                height={48}
-                priority
                 className="w-full h-full object-contain"
                 referrerPolicy="no-referrer"
               />
@@ -78,7 +71,7 @@ export function Header() {
               return (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  to={link.href}
                   className={`transition-colors whitespace-nowrap shrink-0 relative py-1 ${
                     isActive
                       ? 'text-[#e8400d] font-semibold'
@@ -127,7 +120,7 @@ export function Header() {
                     transition={{ delay: idx * 0.04 }}
                   >
                     <Link
-                      href={link.href}
+                      to={link.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
                         isActive

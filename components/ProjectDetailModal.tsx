@@ -1,12 +1,10 @@
-'use client';
-
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useCompany } from '@/lib/company-context';
 import { X, CheckCircle2, ArrowUpLeft, AlertCircle, Cpu, Calendar, Building, Sparkles } from 'lucide-react';
 
 export function ProjectDetailModal() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { data, selectedProjectId, setSelectedProjectId, setContactPrefillTopic } = useCompany();
 
   if (!selectedProjectId) return null;
@@ -17,7 +15,7 @@ export function ProjectDetailModal() {
   const handleInquire = () => {
     setContactPrefillTopic(`استعلام همکاری درباره: ${project.title}`);
     setSelectedProjectId(null);
-    router.push('/contact');
+    navigate('/contact');
   };
 
   return (

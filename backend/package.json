@@ -1,0 +1,15 @@
+{
+  "name": "negar-abtab-backend",
+  "version": "1.0.0",
+  "description": "Express Node.js Backend API for Negar Abtab Abangah (IP: 141.11.32.127)",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
