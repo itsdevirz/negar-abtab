@@ -1,11 +1,11 @@
-// API configuration for static frontend (public_html) connecting to backend at 141.11.32.127
+// API configuration for static frontend (public_html) connecting to backend at 141.11.32.127:5000
 
 export const BACKEND_SERVER_IP = '141.11.32.127';
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && !window.location.hostname.includes('run.app')
-    ? `http://${BACKEND_SERVER_IP}:3000`
+    ? `http://${BACKEND_SERVER_IP}:5000`
     : '');
 
 /**

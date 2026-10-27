@@ -8,7 +8,22 @@
   RewriteRule . /index.html [L]
 </IfModule>
 
-# MIME types and caching headers for fonts & assets
+# Increase PHP upload limits for video files in /uploads/
+<IfModule mod_php7.c>
+  php_value upload_max_filesize 500M
+  php_value post_max_size 500M
+  php_value max_execution_time 600
+  php_value max_input_time 600
+</IfModule>
+
+<IfModule mod_php.c>
+  php_value upload_max_filesize 500M
+  php_value post_max_size 500M
+  php_value max_execution_time 600
+  php_value max_input_time 600
+</IfModule>
+
+# Headers for CORS
 <IfModule mod_headers.c>
   Header set Access-Control-Allow-Origin "*"
 </IfModule>

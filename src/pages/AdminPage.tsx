@@ -77,8 +77,8 @@ export function AdminPage() {
   // Authentication State
   const [authAdminUser, setAuthAdminUser] = useState<AdminUser | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
-  const [loginUsername, setLoginUsername] = useState('You');
-  const [loginPassword, setLoginPassword] = useState('You1431569@');
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -577,19 +577,7 @@ export function AdminPage() {
             </div>
           </div>
 
-          <div className="p-3.5 bg-white/5 rounded-xl border border-white/10 text-xs space-y-1">
-            <div className="flex items-center justify-between text-[#FFEF99] font-semibold">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-[#e8400d]" />
-                اطلاعات ورود ادمین پیش‌فرض:
-              </span>
-              <span className="font-mono text-[10px] bg-white/10 px-2 py-0.5 rounded">SuperAdmin</span>
-            </div>
-            <div className="text-[11px] text-[#c5c4c1] pt-1 space-y-0.5 font-mono" dir="ltr">
-              <div>نام کاربری (Username): <strong className="text-white">You</strong></div>
-              <div>رمز عبور (Password): <strong className="text-white">You1431569@</strong></div>
-            </div>
-          </div>
+
 
           {loginError && (
             <motion.div

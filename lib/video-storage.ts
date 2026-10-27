@@ -1,4 +1,4 @@
-// IndexedDB & Server Host upload helper for video files
+// IndexedDB & Client Host Storage helper for video files
 
 const DB_NAME = 'negar_abtab_video_db';
 const STORE_NAME = 'video_files';
@@ -28,11 +28,37 @@ function openDB(): Promise<IDBDatabase> {
 import { getApiUrl } from './api-config';
 
 /**
- * Uploads video file to the server API route (/api/upload) so it persists on the backend (141.11.32.127).
- * Returns the server URL (/api/videos/[filename] or full URL) or null if server fails.
+ * Uploads video file directly to the host /public_html/uploads/ directory using /upload.php endpoint.
+ * Returns the public URL (/uploads/filename.mp4) or null if upload fails.
  */
 export async function uploadVideoToServerHost(file: File): Promise<string | null> {
+  // 1. Try PHP uploader script on static host (public_html/upload.php -> /uploads/)
   try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const phpUploaderUrl = '/upload.php';
+    const phpRes = await fetch(phpUploaderUrl, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (phpRes.ok) {
+      const data = await phpRes.json();
+      if (data.success && data.url) {
+        return data.url; // e.g. /uploads/1740000000_video.mp4
+      }
+    }
+  } catch (phpErr) {
+    console.warn('PHP upload.php endpoint not available, trying backend fallback:', phpErr);
+  }
+
+  // 2. Fallback to API endpoint if not on HTTPS or if custom API endpoint is configured
+  try {
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && !process.env.NEXT_PUBLIC_API_URL?.startsWith('https:')) {
+      return null;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -45,7 +71,6 @@ export async function uploadVideoToServerHost(file: File): Promise<string | null
     if (res.ok) {
       const data = await res.json();
       if (data.url) {
-        // Return full URL if uploaded to remote server
         if (data.url.startsWith('http://') || data.url.startsWith('https://')) {
           return data.url;
         }
@@ -55,6 +80,7 @@ export async function uploadVideoToServerHost(file: File): Promise<string | null
   } catch (error) {
     console.warn('Host upload endpoint warning (using client fallback):', error);
   }
+
   return null;
 }
 
