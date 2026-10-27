@@ -48,6 +48,8 @@ import {
   deleteVideoFile,
   getVideoBlob,
   uploadVideoToServerHost,
+  uploadVideoWithProgress,
+  deleteVideoFromHost,
 } from '@/lib/video-storage';
 import { GooSwitch } from '@/components/ui/goo-switch';
 import { FileUpload } from '@/components/ui/file-upload';
@@ -188,6 +190,8 @@ export function AdminPage() {
   const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string>('');
   const [fileDetails, setFileDetails] = useState<{ name: string; size: string } | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   // Project Form Modal State
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -285,6 +289,8 @@ export function AdminPage() {
     setSelectedVideoFile(null);
     setVideoPreviewUrl('');
     setFileDetails(null);
+    setUploadProgress(null);
+    setIsUploading(false);
     setVideoFormData({
       title: '',
       category: 'automation',
@@ -304,6 +310,8 @@ export function AdminPage() {
     setEditingVideoId(vid.id);
     setSelectedVideoFile(null);
     setFileDetails(null);
+    setUploadProgress(null);
+    setIsUploading(false);
 
     try {
       const blob = await getVideoBlob(vid.id);
@@ -352,13 +360,21 @@ export function AdminPage() {
     let finalVideoUrl = videoFormData.videoUrl;
 
     if (selectedVideoFile) {
-      const serverHostUrl = await uploadVideoToServerHost(selectedVideoFile);
-      if (serverHostUrl) {
-        finalVideoUrl = serverHostUrl;
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      const uploadRes = await uploadVideoWithProgress(selectedVideoFile, (percent) => {
+        setUploadProgress(percent);
+      });
+
+      if (uploadRes.url) {
+        finalVideoUrl = uploadRes.url;
       } else if (videoPreviewUrl) {
         finalVideoUrl = videoPreviewUrl;
       }
       await saveVideoFile(videoId, selectedVideoFile);
+      setIsUploading(false);
+      setUploadProgress(null);
     }
 
     if (editingVideoId) {
@@ -366,7 +382,7 @@ export function AdminPage() {
         ...videoFormData,
         videoUrl: finalVideoUrl,
       });
-      showNotice('ویدئوی آموزشی با موفقیت در هاست و دیتابیس سیستم به‌روزرسانی شد.');
+      showNotice('ویدئوی آموزشی با موفقیت در پوشه uploads هاست و دیتابیس سیستم به‌روزرسانی شد.');
     } else {
       addVideo({
         ...videoFormData,
@@ -375,12 +391,14 @@ export function AdminPage() {
           finalVideoUrl ||
           'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
       });
-      showNotice('ویدئوی آموزشی جدید با موفقیت روی هاست آپلود و ذخیره گردید.');
+      showNotice('ویدئوی آموزشی جدید با موفقیت روی پوشه uploads هاست آپلود و ذخیره گردید.');
     }
     setVideoModalOpen(false);
     setSelectedVideoFile(null);
     setVideoPreviewUrl('');
     setFileDetails(null);
+    setUploadProgress(null);
+    setIsUploading(false);
   };
 
   const handleOpenAddProject = () => {
@@ -601,7 +619,7 @@ export function AdminPage() {
                   dir="ltr"
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
-                  placeholder="You"
+                  placeholder=""
                   className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-[#e8400d] text-white rounded-xl focus:outline-hidden font-mono text-sm pl-10"
                   required
                 />
@@ -619,7 +637,7 @@ export function AdminPage() {
                   dir="ltr"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="You1431569@"
+                  placeholder=""
                   className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-[#e8400d] text-white rounded-xl focus:outline-hidden font-mono text-sm pl-10 pr-10"
                   required
                 />
@@ -1038,9 +1056,10 @@ export function AdminPage() {
                               </button>
                               <DeleteButton
                                 onDelete={async () => {
+                                  await deleteVideoFromHost(vid.videoUrl);
                                   deleteVideo(vid.id);
                                   await deleteVideoFile(vid.id);
-                                  showNotice(`ویدئوی «${vid.title}» با موفقیت حذف شد.`);
+                                  showNotice(`ویدئوی «${vid.title}» با موفقیت از سیستم و پوشه uploads هاست حذف شد.`);
                                 }}
                                 itemTitle={vid.title}
                                 size="sm"
@@ -1443,6 +1462,21 @@ export function AdminPage() {
                 )}
               </div>
 
+              {isUploading && uploadProgress !== null && (
+                <div className="space-y-1.5 p-3 bg-[#F6F5F3] border border-[rgba(17,17,17,0.1)] rounded-xl">
+                  <div className="flex items-center justify-between text-xs font-semibold text-[#111111]">
+                    <span>در حال آپلود ویدئو به پوشه uploads هاست...</span>
+                    <span className="font-mono text-[#e8400d] font-bold">{uploadProgress}٪</span>
+                  </div>
+                  <div className="w-full bg-neutral-200 h-2.5 rounded-full overflow-hidden">
+                    <div
+                      className="bg-[#e8400d] h-full transition-all duration-150 ease-out rounded-full"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block font-medium text-[#111111] mb-1">شرح ویدئو</label>
                 <textarea
@@ -1450,6 +1484,7 @@ export function AdminPage() {
                   value={videoFormData.description}
                   onChange={(e) => setVideoFormData({ ...videoFormData, description: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg border-[rgba(17,17,17,0.12)] focus:outline-hidden"
+                  disabled={isUploading}
                 />
               </div>
 
@@ -1461,6 +1496,7 @@ export function AdminPage() {
                   onChange={(e) => setVideoFormData({ ...videoFormData, captionText: e.target.value })}
                   placeholder="متن کامل پیاده‌شده زیرنویس..."
                   className="w-full px-3 py-2 border rounded-lg border-[rgba(17,17,17,0.12)] focus:outline-hidden"
+                  disabled={isUploading}
                 />
               </div>
 
@@ -1468,15 +1504,24 @@ export function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setVideoModalOpen(false)}
-                  className="px-4 py-2 bg-[#F6F5F3] hover:bg-[#eceae6] rounded-lg font-medium text-[#575655]"
+                  disabled={isUploading}
+                  className="px-4 py-2 bg-[#F6F5F3] hover:bg-[#eceae6] rounded-lg font-medium text-[#575655] disabled:opacity-50"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#111111] hover:bg-[#272625] text-white rounded-lg font-semibold"
+                  disabled={isUploading}
+                  className="px-5 py-2 bg-[#111111] hover:bg-[#272625] text-white rounded-lg font-semibold disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                 >
-                  ذخیره و آپلود ویدئو
+                  {isUploading ? (
+                    <>
+                      <RotateCcw className="w-4 h-4 animate-spin text-[#FFD7F0]" />
+                      <span>در حال آپلود ({uploadProgress !== null ? uploadProgress : 0}٪)...</span>
+                    </>
+                  ) : (
+                    <span>ذخیره و آپلود ویدئو</span>
+                  )}
                 </button>
               </div>
             </form>

@@ -51,6 +51,8 @@ import {
   deleteVideoFile,
   getVideoBlob,
   uploadVideoToServerHost,
+  uploadVideoWithProgress,
+  deleteVideoFromHost,
 } from '@/lib/video-storage';
 import { GooSwitch } from '@/components/ui/goo-switch';
 import { FileUpload } from '@/components/ui/file-upload';
@@ -565,7 +567,7 @@ export default function AdminPage() {
       if (ok) {
         showNotice(`حساب مدیر «${name}» با موفقیت حذف شد.`);
       } else {
-        alert('حساب ادمین اصلی (You) یا تنها ادمین سیستم قابل حذف نمی‌باشد.');
+        alert('حساب ادمین اصلی یا تنها ادمین سیستم قابل حذف نمی‌باشد.');
       }
     }
   };
@@ -612,21 +614,6 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Credentials Info Box */}
-          <div className="p-3.5 bg-white/5 rounded-xl border border-white/10 text-xs space-y-1">
-            <div className="flex items-center justify-between text-[#FFEF99] font-semibold">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-[#e8400d]" />
-                اطلاعات ورود ادمین پیش‌فرض:
-              </span>
-              <span className="font-mono text-[10px] bg-white/10 px-2 py-0.5 rounded">SuperAdmin</span>
-            </div>
-            <div className="text-[11px] text-[#c5c4c1] pt-1 space-y-0.5 font-mono" dir="ltr">
-              <div>نام کاربری (Username): <strong className="text-white">You</strong></div>
-              <div>رمز عبور (Password): <strong className="text-white">You1431569@</strong></div>
-            </div>
-          </div>
-
           {/* Error Message Banner */}
           {loginError && (
             <motion.div
@@ -651,7 +638,7 @@ export default function AdminPage() {
                   dir="ltr"
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
-                  placeholder="You"
+                  placeholder=""
                   className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-[#e8400d] text-white rounded-xl focus:outline-hidden font-mono text-sm pl-10"
                   required
                 />
@@ -669,7 +656,7 @@ export default function AdminPage() {
                   dir="ltr"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="You1431569@"
+                  placeholder=""
                   className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-[#e8400d] text-white rounded-xl focus:outline-hidden font-mono text-sm pl-10 pr-10"
                   required
                 />
