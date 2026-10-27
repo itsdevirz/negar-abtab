@@ -112,7 +112,53 @@ let inquiriesList = [];
 // REST API ROUTES
 // ==========================================
 
-// Health Check
+// Root & Health Check Endpoints
+app.get('/', (req, res) => {
+  res.status(200).send(`
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+      <head>
+        <meta charset="utf-8">
+        <title>سرور بکند نگار آبتاب آبانگاه</title>
+        <style>
+          body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: #111; color: #fff; text-align: center; padding: 50px 20px; margin: 0; }
+          .card { background: #1a1918; border: 1px solid #333; padding: 40px 30px; border-radius: 24px; display: inline-block; max-width: 520px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+          h2 { color: #fff; margin-top: 0; font-size: 22px; }
+          .status { color: #10b981; font-weight: bold; background: rgba(16,185,129,0.15); padding: 8px 16px; border-radius: 99px; display: inline-block; font-size: 14px; }
+          p { color: #a6a5a2; font-size: 14px; line-height: 1.6; }
+          code { background: #272625; padding: 3px 8px; border-radius: 6px; color: #FFEF99; font-family: monospace; }
+          a { color: #e8400d; text-decoration: none; font-weight: bold; }
+          a:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h2>🚀 سرور بکند شرکت نگار آبتاب آبانگاه</h2>
+          <p class="status">● وضعیت سرور: آنلاین و آماده پاسخگویی</p>
+          <p>آدرس آی‌پی سرور: <code>${SERVER_IP}:${PORT}</code></p>
+          <p><a href="/api/health">تست سلامت سرویس (/api/health) ←</a></p>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+app.get('/api', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Negar Abtab Abangah API is active',
+    endpoints: [
+      '/api/health',
+      '/api/company',
+      '/api/auth/login',
+      '/api/admins',
+      '/api/videos',
+      '/api/projects',
+      '/api/inquiries'
+    ]
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
@@ -280,10 +326,10 @@ app.put('/api/inquiries/:id/status', (req, res) => {
 });
 
 // Start Express Server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`===================================================`);
   console.log(`🚀 Express Backend Server is running!`);
-  console.log(`🌐 Server IP: ${SERVER_IP}`);
+  console.log(`🌐 Server Host: 0.0.0.0:${PORT} (IP: ${SERVER_IP})`);
   console.log(`🔌 Listening on Port: ${PORT}`);
   console.log(`🔗 API Base: http://${SERVER_IP}:${PORT}/api`);
   console.log(`===================================================`);
